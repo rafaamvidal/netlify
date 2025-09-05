@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gerador de Legendas .SRT - RV Tools</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Fira+Code&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --font-body: 'Inter', sans-serif;
+            --font-mono: 'Fira Code', monospace;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: var(--font-body);
+            background-color: #111827;
+            background-image: radial-gradient(circle at 1px 1px, #374151 1px, transparent 0);
+            background-size: 20px 20px;
+            min-height: 100vh;
+            padding: 20px;
+            color: #E5E7EB;
+        }
+        .container { max-width: 1200px; margin: 0 auto; background: transparent; border-radius: 15px; overflow: hidden; }
+        .header { background: linear-gradient(45deg, #667eea, #764ba2); color: white; padding: 30px; text-align: center; position: relative; border-radius: 15px 15px 0 0; }
+        .header .back-link { position: absolute; top: 50%; left: 30px; transform: translateY(-50%); color: white; text-decoration: none; background: rgba(255,255,255,0.15); padding: 8px 15px; border-radius: 8px; font-weight: 600; transition: background 0.2s ease; }
+        .header .back-link:hover { background: rgba(255,255,255,0.3); }
+        .header h1 { font-size: 2.5rem; margin-bottom: 10px; }
+        .header p { font-size: 1.1rem; opacity: 0.9; }
+        .main-content { padding: 30px; background: rgba(31, 41, 55, 0.5); backdrop-filter: blur(10px); border: 1px solid #4B5563; border-top: none; border-radius: 0 0 15px 15px; display: grid; grid-template-columns: 1fr; gap: 2rem; }
+        .setup-section { background: rgba(17, 24, 39, 0.5); border-radius: 10px; padding: 25px; border-left: 4px solid #764ba2; }
+        .setup-section h3 { color: #FFF; margin-bottom: 20px; font-size: 1.3rem; border-bottom: 1px solid #4B5563; padding-bottom: 10px; }
+        .form-group label { display: block; margin-bottom: 8px; font-weight: 600; color: #D1D5DB; }
+        textarea, input[type="number"] {
+            width: 100%; padding: 12px; border: 2px solid #4B5563; background-color: #374151; color: #FFF;
+            border-radius: 8px; font-size: 1rem; transition: border-color 0.3s ease; font-family: var(--font-mono);
+        }
+        textarea { min-height: 200px; resize: vertical; }
+        textarea:focus, input:focus { outline: none; border-color: #764ba2; }
+        textarea[readonly] { background-color: #1F2937; cursor: default; }
+        .btn {
+            background: linear-gradient(45deg, #667eea, #764ba2); color: white; border: none; padding: 12px 25px;
+            border-radius: 8px; font-size: 1rem; cursor: pointer; transition: all 0.2s ease; font-family: var(--font-body);
+            display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem; font-weight: 600;
+        }
+        .btn:hover { transform: translateY(-2px); box-shadow: 0 4px 10px rgba(0,0,0,0.25); }
+        .btn:disabled { background: #4B5563; cursor: not-allowed; transform: none; }
+        .button-group { display: flex; gap: 1rem; flex-wrap: wrap; margin-top: 1rem; }
+        .real-time-stats { display: flex; justify-content: space-around; gap: 1.5rem; text-align: center; padding: 1rem; background-color: #111827; border-radius: 8px; margin-top: 1rem; }
+        .stat-item span { display: block; font-size: 1.75rem; font-weight: 700; color: #FFF; }
+        .stat-item p { font-size: 0.9rem; color: #9CA3AF; }
+        .srt-settings { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1.5rem; align-items: center; }
+        .notification-area { position: fixed; bottom: 20px; right: 20px; z-index: 1000; max-width: 400px; }
+        .notification { background: #333; color: white; padding: 15px 20px; border-radius: 8px; margin-bottom: 10px; box-shadow: 0 5px 15px rgba(0,0,0,0.3); animation: slideInUp 0.3s ease; }
+        .notification.success { background: #27ae60; }
+        .notification.error { background: #e74c3c; }
+        @keyframes slideInUp { from { transform: translateY(100%); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        .spinner { width: 18px; height: 18px; border: 3px solid rgba(255, 255, 255, 0.3); border-radius: 50%; border-top-color: #fff; animation: spin 1s ease-in-out infinite; display: none; }
+        .btn.loading .spinner { display: block; }
+        .btn.loading .btn-text { display: none; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        footer { text-align: center; padding: 20px; color: #9CA3AF; opacity: 0.8; font-size: 0.9rem; }
+        @media (max-width: 768px) {
+            .header h1 { font-size: 1.8rem; margin-top: 40px; }
+            .header .back-link { top: 20px; left: 20px; transform: none; font-size: 0.8rem; padding: 6px 10px; }
+        }
+    </style>
+</head>
+<body>
+    <div id="notification-area"></div>
+    <div class="container">
+        <div class="header">
+            <a href="index.html" class="back-link">&larr; Voltar ao Painel</a>
+            <h1>📝 Gerador de Legendas .SRT</h1>
+            <p>Monte seu roteiro e crie legendas SRT com um clique.</p>
+        </div>
+        <div class="main-content">
+            <section class="setup-section">
+                <h3>1. Entrada do Roteiro</h3>
+                <textarea id="scriptInput" placeholder="Cole uma PARTE do roteiro aqui. Ignore linhas com '#'. Depois, clique em 'Adicionar Parte' abaixo."></textarea>
+                <div class="button-group">
+                    <button id="addPartButton" class="btn">Adicionar Parte</button>
+                    <button id="clearButton" class="btn" style="background: #4B5563;">Limpar Tudo</button>
+                </div>
+                <div class="real-time-stats">
+                    <div class="stat-item"><span id="wordCount">0</span><p>Palavras</p></div>
+                    <div class="stat-item"><span id="narrationTime">0:00</span><p>Narração Estimada</p></div>
+                </div>
+            </section>
+
+            <section class="setup-section">
+                <h3>2. Roteiro Limpo & Exportação</h3>
+                <textarea id="cleanedScriptOutput" readonly placeholder="Seu roteiro completo (sem anotações) aparecerá aqui..."></textarea>
+                <div class="button-group">
+                    <button id="copyScriptButton" class="btn">Copiar Roteiro</button>
+                    <button id="saveTxtButton" class="btn">Salvar como .TXT</button>
+                </div>
+            </section>
+
+            <section class="setup-section">
+                <h3>3. Gerador de Legenda (.SRT)</h3>
+                <div class="srt-settings">
+                    <div>
+                        <label for="maxChars">Máx. caracteres/bloco:</label>
+                        <input type="number" id="maxChars" value="90">
+                    </div>
+                    <div>
+                        <label for="charsPerSecond">Caracteres/segundo (leitura):</label>
+                        <input type="number" id="charsPerSecond" value="18">
+                    </div>
+                    <div>
+                       <label for="pauseBetweenBlocks">Pausa entre blocos (s):</label>
+                       <input type="number" id="pauseBetweenBlocks" value="0.5" step="0.1">
+                   </div>
+                </div>
+                <button id="generateSrtButton" class="btn" style="margin-top: 1.5rem; width: 100%;">
+                   <span class="btn-text">Gerar e Visualizar SRT</span>
+                   <div class="spinner"></div>
+                </button>
+                <textarea id="srtOutput" readonly style="margin-top: 1.5rem;" placeholder="Sua legenda .SRT aparecerá aqui..."></textarea>
+                <div class="button-group">
+                   <button id="copySrtButton" class="btn">Copiar SRT</button>
+                   <button id="saveSrtButton" class="btn">Salvar como .SRT</button>
+               </div>
+            </section>
+        </div>
+    </div>
+    <footer>
+        <p>© Gerador de Legendas</p>
+        <p>Criado por: RV Tools</p>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            let scriptParts = JSON.parse(localStorage.getItem('scriptParts')) || [];
+            
+            const scriptInput = document.getElementById('scriptInput');
+            const cleanedScriptOutput = document.getElementById('cleanedScriptOutput');
+            const srtOutput = document.getElementById('srtOutput');
+            const wordCountEl = document.getElementById('wordCount');
+            const narrationTimeEl = document.getElementById('narrationTime');
+            const addPartButton = document.getElementById('addPartButton');
+            const clearButton = document.getElementById('clearButton');
+            const copyScriptButton = document.getElementById('copyScriptButton');
+            const saveTxtButton = document.getElementById('saveTxtButton');
+            const generateSrtButton = document.getElementById('generateSrtButton');
+            const copySrtButton = document.getElementById('copySrtButton');
+            const saveSrtButton = document.getElementById('saveSrtButton');
+            const maxCharsInput = document.getElementById('maxChars');
+            const charsPerSecondInput = document.getElementById('charsPerSecond');
+            const pauseBetweenBlocksInput = document.getElementById('pauseBetweenBlocks');
+            
+            const saveState = () => localStorage.setItem('scriptParts', JSON.stringify(scriptParts));
+
+            const showNotification = (message, type = 'success') => {
+                const notificationArea = document.getElementById('notification-area');
+                const notification = document.createElement('div');
+                notification.className = `notification ${type}`;
+                notification.textContent = message;
+                notificationArea.appendChild(notification);
+                setTimeout(() => notification.remove(), 3000);
+            };
+
+            const cleanText = (rawText) => {
+                if (!rawText) return '';
+                return rawText.split('\n').filter(line => !line.trim().startsWith('#')).join('\n').trim();
+            };
+
+            const updateAnalysis = () => {
+                const fullRawScript = scriptParts.join('\n\n');
+                const cleanedText = cleanText(fullRawScript);
+                cleanedScriptOutput.value = cleanedText;
+                
+                const words = cleanedText.split(/\s+/).filter(Boolean);
+                wordCountEl.textContent = words.length;
+
+                const WPM = 150; // Palavras por minuto
+                const narrationTotalSeconds = (words.length / WPM) * 60;
+                const narrationMinutes = Math.floor(narrationTotalSeconds / 60);
+                const narrationSeconds = Math.round(narrationTotalSeconds % 60);
+                narrationTimeEl.textContent = `${narrationMinutes}:${String(narrationSeconds).padStart(2, '0')}`;
+                
+                saveState();
+            };
+
+            const addPart = () => {
+                const partText = scriptInput.value.trim();
+                if (partText) {
+                    scriptParts.push(partText);
+                    scriptInput.value = '';
+                    scriptInput.focus();
+                    updateAnalysis();
+                    showNotification('Parte adicionada ao roteiro!');
+                }
+            };
+            
+            const clearAll = () => {
+                if(scriptParts.length === 0) return;
+                if (confirm('Tem certeza que deseja limpar todo o roteiro? Esta ação não pode ser desfeita.')) {
+                    scriptParts = [];
+                    scriptInput.value = '';
+                    srtOutput.value = '';
+                    updateAnalysis();
+                    showNotification('Roteiro limpo com sucesso.', 'error');
+                }
+            };
+            
+            const copyToClipboard = (elementToCopy, button) => {
+                if (!elementToCopy.value) return;
+                navigator.clipboard.writeText(elementToCopy.value).then(() => {
+                    const originalText = button.querySelector('.btn-text')?.textContent || button.textContent;
+                    button.textContent = 'Copiado!';
+                    button.disabled = true;
+                    setTimeout(() => {
+                        button.textContent = originalText;
+                        button.disabled = false;
+                    }, 2000);
+                }).catch(err => {
+                    console.error('Erro ao copiar:', err);
+                    showNotification('Falha ao copiar o texto.', 'error');
+                });
+            };
+
+            const saveFile = (content, filename, contentType) => {
+                if (!content) return;
+                const blob = new Blob([content], { type: contentType });
+                const a = document.createElement('a');
+                a.href = URL.createObjectURL(blob);
+                a.download = filename;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(a.href);
+            };
+
+            const formatSrtTime = (totalSeconds) => {
+                const hours = String(Math.floor(totalSeconds / 3600)).padStart(2, '0');
+                const minutes = String(Math.floor((totalSeconds % 3600) / 60)).padStart(2, '0');
+                const seconds = String(Math.floor(totalSeconds % 60)).padStart(2, '0');
+                const milliseconds = String(Math.round((totalSeconds - Math.floor(totalSeconds)) * 1000)).padStart(3, '0');
+                return `${hours}:${minutes}:${seconds},${milliseconds}`;
+            };
+
+            const generateSrt = () => {
+                generateSrtButton.classList.add('loading');
+                generateSrtButton.disabled = true;
+                
+                setTimeout(() => {
+                    try {
+                        const text = cleanedScriptOutput.value;
+                        if (!text) {
+                            throw new Error("O roteiro montado está vazio.");
+                        }
+                        const maxChars = parseInt(maxCharsInput.value, 10);
+                        const charsPerSecond = parseInt(charsPerSecondInput.value, 10);
+                        const pause = parseFloat(pauseBetweenBlocksInput.value);
+
+                        if (isNaN(maxChars) || isNaN(charsPerSecond) || isNaN(pause) || maxChars <= 0 || charsPerSecond <= 0 || pause < 0) {
+                             throw new Error("Configurações de SRT inválidas.");
+                        }
+                        
+                        const words = text.split(/\s+/).filter(Boolean);
+                        let srtContent = '';
+                        let blockIndex = 1;
+                        let currentTime = 0;
+                        let wordIndex = 0;
+                        
+                        while(wordIndex < words.length) {
+                            let currentBlock = '';
+                            while(wordIndex < words.length) {
+                                const nextWord = words[wordIndex];
+                                const potentialBlock = currentBlock ? `${currentBlock} ${nextWord}` : nextWord;
+                                if(potentialBlock.length > maxChars) break;
+                                currentBlock = potentialBlock;
+                                wordIndex++;
+                            }
+                            
+                            if (currentBlock) {
+                                const startTime = currentTime;
+                                const duration = currentBlock.length / charsPerSecond;
+                                const endTime = startTime + duration;
+                                
+                                srtContent += `${blockIndex}\n`;
+                                srtContent += `${formatSrtTime(startTime)} --> ${formatSrtTime(endTime)}\n`;
+                                srtContent += `${currentBlock}\n\n`;
+                                
+                                currentTime = endTime + pause;
+                                blockIndex++;
+                            }
+                        }
+                        srtOutput.value = srtContent.trim();
+                        if(srtContent) {
+                            showNotification('Legenda .SRT gerada com sucesso!');
+                        }
+                    } catch (error) {
+                        console.error('Erro na geração de SRT:', error);
+                        showNotification(error.message, 'error');
+                    } finally {
+                        generateSrtButton.classList.remove('loading');
+                        generateSrtButton.disabled = false;
+                    }
+                }, 250);
+            };
+            
+            addPartButton.addEventListener('click', addPart);
+            clearButton.addEventListener('click', clearAll);
+            copyScriptButton.addEventListener('click', () => copyToClipboard(cleanedScriptOutput, copyScriptButton));
+            saveTxtButton.addEventListener('click', () => saveFile(cleanedScriptOutput.value, 'roteiro.txt', 'text/plain;charset=utf-8'));
+            generateSrtButton.addEventListener('click', generateSrt);
+            copySrtButton.addEventListener('click', () => copyToClipboard(srtOutput, copySrtButton));
+            saveSrtButton.addEventListener('click', () => saveFile(srtOutput.value, 'legenda.srt', 'application/x-subrip;charset=utf-8'));
+            
+            updateAnalysis();
+        });
+    </script>
+</body>
+</html>
