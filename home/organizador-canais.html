@@ -391,7 +391,7 @@
         let currentCalendarDate = new Date();
         const CHANNEL_COLORS = ['#ff6b6b', '#48dbfb', '#1dd1a1', '#feca57', '#ff9f43', '#5f27cd', '#54a0ff', '#e84393', '#00d2d3', '#2e86de'];
 
-        /**
+         /**
          * BUG FIX v5.1: A lógica de 'interval' foi reescrita para usar uma data de início fixa
          * em vez da data do último post, que causava inconsistências no calendário para canais novos.
          * Adicionado um novo campo 'startDate' para cada canal.
@@ -436,4 +436,404 @@
             }
         }
 
-        function getFrequencyDescripti
+        function getFrequencyDescription(channel) {
+            switch (channel.frequencyType) {
+                case 'daily': return 'Diariamente';
+                case 'interval': return `A cada ${channel.frequencyValue} dias`;
+                case 'specific_days':
+                    const weekDays = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
+                    const selectedDays = (channel.frequencyValue || []).map(d => weekDays[d]).join(', ');
+                    return selectedDays || 'Nenhum dia';
+                default: return 'Diariamente';
+            }
+        }
+
+        function calculateBacklogDays(channel) {
+            if (channel.backlog === 0) return '0 dias';
+            let days = 0;
+            switch (channel.frequencyType) {
+                case 'daily': days = channel.backlog; break;
+                case 'interval': days = channel.backlog * channel.frequencyValue; break;
+                case 'specific_days':
+                    const postsPerWeek = (channel.frequencyValue || []).length;
+                    if (postsPerWeek > 0) {
+                        const weeks = channel.backlog / postsPerWeek;
+                        days = Math.floor(weeks * 7);
+                    } else { return '∞ dias'; }
+                    break;
+                default: days = channel.backlog;
+            }
+            return `${days} dias`;
+        }
+        
+        function renderCalendar() {
+            const calendarGrid = document.getElementById('calendar-grid');
+            const weekdaysGrid = document.getElementById('calendar-weekdays');
+            const monthYearEl = document.getElementById('current-month-year');
+            if(!calendarGrid || !weekdaysGrid || !monthYearEl) return;
+            
+            calendarGrid.innerHTML = '';
+            weekdaysGrid.innerHTML = '';
+            
+            const month = currentCalendarDate.getMonth();
+            const year = currentCalendarDate.getFullYear();
+            monthYearEl.textContent = new Date(year, month).toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
+            
+            const firstDayOfMonth = new Date(year, month, 1).getDay();
+            const daysInMonth = new Date(year, month + 1, 0).getDate();
+            const weekdays = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
+            
+            weekdays.forEach(day => { weekdaysGrid.innerHTML += `<div class="calendar-weekday">${day}</div>`; });
+            
+            for (let i = 0; i < firstDayOfMonth; i++) { calendarGrid.innerHTML += `<div class="calendar-day other-month"></div>`; }
+            
+            for (let day = 1; day <= daysInMonth; day++) {
+                const dayDate = new Date(year, month, day);
+                const channelsPosting = channels.filter(ch => ch.configured && isPostDay(ch, dayDate));
+                let indicatorsHTML = '<div class="post-indicators">';
+                channelsPosting.forEach(ch => { indicatorsHTML += `<div class="post-indicator" style="background-color: ${ch.color};" title="${ch.name}"></div>`; });
+                indicatorsHTML += '</div>';
+                const isToday = new Date().toDateString() === dayDate.toDateString();
+                calendarGrid.innerHTML += `<div class="calendar-day ${isToday ? 'today' : ''}"><div class="day-number">${day}</div>${indicatorsHTML}</div>`;
+            }
+        }
+
+
+        function changeMonth(delta) {
+            currentCalendarDate.setMonth(currentCalendarDate.getMonth() + delta);
+            renderCalendar();
+        }
+
+        function updateClock() {
+            const clockEl = document.getElementById('currentTime');
+            if(!clockEl) return;
+            const now = new Date();
+            const timeString = now.toLocaleTimeString('pt-BR');
+            const dateString = now.toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' });
+            clockEl.textContent = `${timeString} - ${dateString}`;
+            checkDayChange();
+        }
+
+        function setupChannels() {
+            const count = parseInt(document.getElementById('channelCount').value);
+            if (isNaN(count) || count < 1 || count > 300) { alert('Digite um número entre 1 e 300'); return; }
+            const confirmSetup = channels.length > 0 ? confirm(`Isso irá definir o número de canais para ${count}. Canais existentes além dessa contagem serão removidos. Deseja continuar?`) : true;
+            if (!confirmSetup) return;
+            while (channels.length < count) {
+                channels.push({
+                    id: Date.now() + channels.length,
+                    name: `Canal ${channels.length + 1}`,
+                    nicho: '', postTime: '09:00', backlog: 0, lastPost: null,
+                    configured: false, frequencyType: 'daily', frequencyValue: 1,
+                    color: CHANNEL_COLORS[channels.length % CHANNEL_COLORS.length],
+                    scheduled: false,
+                    startDate: null // <-- Adicionado para a correção do bug
+                });
+            }
+            if (channels.length > count) { channels = channels.slice(0, count); }
+            saveChannels();
+            renderChannels();
+            renderCalendar();
+        }
+
+        function renderChannels() {
+            const container = document.getElementById('channelsContainer');
+            if(!container) return;
+            container.innerHTML = '';
+            if (channels.length === 0) {
+                container.innerHTML = `<p style="text-align:center; color: #9CA3AF;">Nenhum canal configurado. Adicione canais acima para começar.</p>`;
+                return;
+            }
+            channels.forEach(channel => {
+                const isTodayPostDay = isPostDay(channel, new Date());
+                const idealBacklog = 30;
+                const percentage = channel.backlog > 0 ? (channel.backlog / idealBacklog) * 100 : 0;
+                let cardClass = 'channel-card';
+                let statusText = '';
+                if (!isTodayPostDay) { cardClass += ' rest'; statusText = 'DIA DE DESCANSO';
+                } else if (percentage >= 70) { cardClass += ' good'; statusText = 'BACKLOG BOM';
+                } else if (percentage >= 30) { cardClass += ' warning'; statusText = 'BACKLOG MÉDIO';
+                } else { cardClass += ' critical'; statusText = 'BACKLOG BAIXO'; }
+                if (channel.backlog === 0 && isTodayPostDay) { cardClass += ' danger'; statusText = 'SEM VÍDEOS!'; }
+
+                const today = new Date().toDateString();
+                const lastPost = channel.lastPost ? new Date(channel.lastPost) : null;
+                const postedToday = lastPost && lastPost.toDateString() === today;
+                const now = new Date();
+                const [postHour, postMinute] = channel.postTime.split(':').map(Number);
+                const postDateTime = new Date();
+                postDateTime.setHours(postHour, postMinute, 0, 0);
+                const passedTime = now > postDateTime;
+                let buttonHTML = '';
+                let statusIndicator = '';
+                if (!isTodayPostDay) {
+                    buttonHTML = `<button class="btn btn-small" disabled style="background:#7f8c8d;">Hoje não posta</button>`;
+                    statusIndicator = `<span class="status-indicator status-rest" style="background-color:${channel.color};"></span>`;
+                } else if (postedToday) {
+                    buttonHTML = `<button class="btn btn-small btn-posted" disabled>✅ Postado Hoje</button><button class="btn btn-small" onclick="unmarkPost(${channel.id})" style="background: #e67e22;">↶ Desmarcar</button>`;
+                    statusIndicator = `<span class="status-indicator status-posted" style="background-color:${channel.color};"></span>`;
+                } else if (passedTime && channel.configured) {
+                    buttonHTML = `<button class="btn btn-small btn-not-posted" onclick="markAsPosted(${channel.id})">🚨 Postar Agora!</button>`;
+                    statusIndicator = `<span class="status-indicator status-pending" style="background-color:${channel.color};"></span>`;
+                } else if (channel.configured) {
+                    buttonHTML = `<button class="btn btn-small" onclick="markAsPosted(${channel.id})">⏰ Postar Agora</button>`;
+                    statusIndicator = `<span class="status-indicator" style="background: ${channel.color}; opacity:0.7;"></span>`;
+                }
+
+                let scheduledButtonHTML = '';
+                if (channel.scheduled) {
+                    scheduledButtonHTML = `<button class="btn btn-small btn-posted" disabled>✅ Agendado</button><button class="btn btn-small" onclick="unmarkAsScheduled(${channel.id})" style="background: #f39c12;">↶ Cancelar</button>`;
+                } else {
+                    scheduledButtonHTML = `<button class="btn btn-small" onclick="markAsScheduled(${channel.id})" style="background: #3498db;">🗓️ Agendar Próximo</button>`;
+                }
+
+                const card = document.createElement('div');
+                card.className = cardClass;
+                card.style.borderLeftColor = channel.color;
+                card.innerHTML = `
+                    <div class="channel-header">
+                        <div class="channel-title">${statusIndicator}${channel.name}</div>
+                        <div class="channel-nicho">${channel.nicho || 'Sem nicho'}</div>
+                    </div>
+                    <div class="channel-info">
+                        <div class="info-row"><span class="info-label">Frequência:</span><span class="info-value">${getFrequencyDescription(channel)}</span></div>
+                        <div class="info-row"><span class="info-label">Horário:</span><span class="info-value">${channel.postTime}</span></div>
+                        <div class="info-row"><span class="info-label">Último post:</span><span class="info-value">${channel.lastPost ? new Date(channel.lastPost).toLocaleDateString('pt-BR') : 'Nunca'}</span></div>
+                    </div>
+                    <div class="backlog-display">
+                        <div class="backlog-number">${channel.backlog}</div>
+                        <div class="backlog-days">vídeos (~${calculateBacklogDays(channel)})</div>
+                        <div style="font-weight: bold; margin-top: 5px; font-size: 0.9rem;">${statusText}</div>
+                    </div>
+                    <div class="posting-status">
+                         <div style="display: flex; gap: 8px;">
+                            <button class="btn btn-small" onclick="editChannel(${channel.id})">⚙️ Config</button>
+                            <button class="btn btn-small" onclick="deleteChannel(${channel.id})" style="background: #c0392b;">🗑️</button>
+                        </div>
+                        <div style="display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end;">
+                           ${scheduledButtonHTML}
+                           ${buttonHTML}
+                        </div>
+                    </div>`;
+                container.appendChild(card);
+            });
+        }
+        
+        function toggleFrequencyOptions() {
+            const type = document.getElementById('frequencyType').value;
+            document.getElementById('intervalOptions').style.display = type === 'interval' ? 'block' : 'none';
+            document.getElementById('specificDaysOptions').style.display = type === 'specific_days' ? 'block' : 'none';
+        }
+
+        function editChannel(id) {
+            const channel = channels.find(c => c.id === id); if (!channel) return;
+            currentEditingChannel = channel;
+            document.getElementById('channelName').value = channel.name;
+            document.getElementById('channelNicho').value = channel.nicho;
+            document.getElementById('postTime').value = channel.postTime;
+            document.getElementById('backlogCount').value = channel.backlog;
+            document.getElementById('frequencyType').value = channel.frequencyType || 'daily';
+            toggleFrequencyOptions();
+            if (channel.frequencyType === 'interval') {
+                document.getElementById('postInterval').value = channel.frequencyValue;
+            } else if (channel.frequencyType === 'specific_days' && Array.isArray(channel.frequencyValue)) {
+                document.querySelectorAll('input[name="postDay"]').forEach(checkbox => {
+                    checkbox.checked = channel.frequencyValue.includes(checkbox.value);
+                });
+            }
+            document.getElementById('channelModal').style.display = 'block';
+        }
+
+        document.getElementById('channelForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            if (!currentEditingChannel) return;
+
+            // Se for a primeira configuração, define uma data de início para o agendamento de intervalo.
+            if (!currentEditingChannel.startDate) {
+                currentEditingChannel.startDate = new Date().toISOString();
+            }
+
+            currentEditingChannel.name = document.getElementById('channelName').value;
+            currentEditingChannel.nicho = document.getElementById('channelNicho').value;
+            currentEditingChannel.postTime = document.getElementById('postTime').value;
+            currentEditingChannel.backlog = parseInt(document.getElementById('backlogCount').value);
+            currentEditingChannel.configured = true;
+            const frequencyType = document.getElementById('frequencyType').value;
+            currentEditingChannel.frequencyType = frequencyType;
+            if (frequencyType === 'interval') { currentEditingChannel.frequencyValue = parseInt(document.getElementById('postInterval').value);
+            } else if (frequencyType === 'specific_days') {
+                const selectedDays = [];
+                document.querySelectorAll('input[name="postDay"]:checked').forEach(checkbox => selectedDays.push(checkbox.value));
+                currentEditingChannel.frequencyValue = selectedDays;
+            } else { currentEditingChannel.frequencyValue = 1; }
+            saveChannels();
+            renderChannels();
+            renderCalendar();
+            closeModal();
+            showNotification(`${currentEditingChannel.name} configurado com sucesso!`, 'success');
+        });
+
+        function markAsPosted(id) {
+            const channel = channels.find(c => c.id === id); if (!channel) return;
+            const postedToday = channel.lastPost && new Date(channel.lastPost).toDateString() === new Date().toDateString();
+            if (postedToday) { showNotification(`Você já postou hoje no ${channel.name}!`, 'warning'); return; }
+            if (channel.backlog > 0) {
+                channel.backlog--;
+                channel.lastPost = new Date().toISOString();
+                channel.scheduled = false; 
+                saveChannels();
+                renderChannels();
+                renderCalendar();
+                showNotification(`Vídeo postado no ${channel.name}!`, 'success');
+            } else {
+                showNotification(`Sem vídeos no backlog do ${channel.name}!`, 'warning');
+            }
+        }
+
+        function unmarkPost(id) {
+            const channel = channels.find(c => c.id === id); if (!channel) return;
+            if (confirm(`Desmarcar a postagem de hoje para "${channel.name}"?`)) {
+                channel.backlog++;
+                channel.lastPost = null; 
+                saveChannels();
+                renderChannels();
+                renderCalendar();
+                showNotification(`Postagem de ${channel.name} desmarcada!`, 'info');
+            }
+        }
+
+        function deleteChannel(id) {
+            const channel = channels.find(c => c.id === id); if (!channel) return;
+            if (confirm(`Excluir o canal "${channel.name}"?`)) {
+                channels = channels.filter(c => c.id !== id);
+                document.getElementById('channelCount').value = channels.length;
+                saveChannels();
+                renderChannels();
+                renderCalendar();
+                showNotification(`Canal "${channel.name}" excluído.`, 'critical');
+            }
+        }
+
+        function markAsScheduled(id) {
+            const channel = channels.find(c => c.id === id); if (!channel) return;
+            channel.scheduled = true;
+            saveChannels();
+            renderChannels();
+            showNotification(`Próximo vídeo de "${channel.name}" marcado como agendado!`, 'success');
+        }
+
+        function unmarkAsScheduled(id) {
+            const channel = channels.find(c => c.id === id); if (!channel) return;
+            channel.scheduled = false;
+            saveChannels();
+            renderChannels();
+            showNotification(`Agendamento do próximo vídeo de "${channel.name}" cancelado.`, 'info');
+        }
+
+        function markAsPostedFromAlert() { if (alertChannelId) markAsPosted(alertChannelId); }
+
+        function checkDayChange() {
+            const today = new Date().toDateString();
+            const lastCheckDate = localStorage.getItem('lastCheckDate');
+            if (lastCheckDate && lastCheckDate !== today) {
+                Object.keys(localStorage).forEach(key => {
+                    if (key.startsWith('warning_') || key.startsWith('alert_') || key.startsWith('advance_')) {
+                        localStorage.removeItem(key);
+                    }
+                });
+                showNotification(`📅  Novo dia! Status de postagem resetado.`, 'info');
+                renderChannels();
+            }
+            localStorage.setItem('lastCheckDate', today);
+        }
+
+        function checkPostingTimes() {
+            const now = new Date();
+            const today = now.toDateString();
+            channels.forEach(channel => {
+                if (!channel.configured || !isPostDay(channel, now)) return;
+                const postedToday = channel.lastPost && new Date(channel.lastPost).toDateString() === today;
+                if(postedToday) return;
+                const [postHour, postMinute] = channel.postTime.split(':').map(Number);
+                const postDateTime = new Date(); postDateTime.setHours(postHour, postMinute, 0, 0);
+                if (now > postDateTime) {
+                    const alertKey = `alert_${channel.id}_${today}`;
+                    if (!localStorage.getItem(alertKey)) {
+                        showAlert(`Você não postou o vídeo hoje no ${channel.name}! Horário: ${channel.postTime}`, channel.id);
+                        localStorage.setItem(alertKey, 'true');
+                    }
+                }
+            });
+             renderChannels();
+        }
+        
+        function checkAdvanceNotifications() {
+            const tomorrow = new Date();
+            tomorrow.setDate(tomorrow.getDate() + 1);
+            const tomorrowStr = tomorrow.toDateString();
+            channels.forEach(channel => {
+                if(channel.configured && isPostDay(channel, tomorrow)) {
+                    const notifyKey = `advance_${channel.id}_${tomorrowStr}`;
+                    if(!localStorage.getItem(notifyKey)) {
+                        showNotification(`🔔 Lembrete: Amanhã é dia de postar no canal "${channel.name}"!`, 'warning');
+                        localStorage.setItem(notifyKey, 'true');
+                    }
+                }
+            });
+        }
+        
+        function showNotification(message, type = 'info') {
+            const container = document.getElementById('notifications');
+            if (!container) return;
+            const notification = document.createElement('div');
+            notification.className = `notification ${type}`;
+            notification.textContent = message;
+            container.appendChild(notification);
+            setTimeout(() => { notification.remove(); }, type === 'warning' ? 8000 : 5000);
+        }
+
+        function showAlert(message, channelId = null) {
+            const modal = document.getElementById('alertModal');
+            if(!modal) return;
+            document.getElementById('alertMessage').textContent = message;
+            modal.style.display = 'block';
+            alertChannelId = channelId;
+        }
+
+        function closeAlert() { document.getElementById('alertModal').style.display = 'none'; }
+        function closeModal() { document.getElementById('channelModal').style.display = 'none'; }
+        function saveChannels() { localStorage.setItem('channels', JSON.stringify(channels)); }
+
+        function migrateData() {
+            let needsUpdate = false;
+            channels.forEach((channel, index) => {
+                if (!channel.color) { channel.color = CHANNEL_COLORS[index % CHANNEL_COLORS.length]; needsUpdate = true; }
+                if (typeof channel.scheduled === 'undefined') { channel.scheduled = false; needsUpdate = true; }
+                if (typeof channel.startDate === 'undefined') { channel.startDate = null; needsUpdate = true; }
+            });
+            if (needsUpdate) saveChannels();
+        }
+        
+        function init() {
+            migrateData();
+            checkDayChange();
+            updateClock();
+            setInterval(updateClock, 1000);
+            if (channels.length > 0) {
+                document.getElementById('channelCount').value = channels.length;
+                renderChannels();
+            }
+            renderCalendar();
+            setInterval(checkPostingTimes, 60000); 
+            setInterval(checkAdvanceNotifications, 1000 * 60 * 60);
+            setTimeout(checkPostingTimes, 2000);
+            setTimeout(checkAdvanceNotifications, 3000);
+        }
+
+        document.getElementById('channelModal')?.addEventListener('click', e => { if (e.target === e.currentTarget) closeModal(); });
+        document.getElementById('alertModal')?.addEventListener('click', e => { if (e.target === e.currentTarget) closeAlert(); });
+        document.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>
+
