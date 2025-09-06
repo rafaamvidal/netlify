@@ -141,6 +141,11 @@
             cursor: not-allowed;
             transform: none;
         }
+        
+        .btn-secondary {
+            background: #4B5563;
+            color: #E5E7EB;
+        }
 
         .btn-small {
             padding: 8px 15px;
@@ -222,10 +227,10 @@
         @keyframes blink { 0%, 50% { opacity: 1; } 51%, 100% { opacity: 0.7; } }
 
         .alert-modal, .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 2000; animation: fadeIn 0.3s ease; }
-        .alert-content, .modal-content { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 30px; border-radius: 15px; max-width: 500px; width: 90%; box-shadow: 0 20px 40px rgba(0,0,0,0.3); color: #111827; }
+        .alert-content, .modal-content { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: #1F2937; border: 1px solid #4B5563; padding: 30px; border-radius: 15px; max-width: 500px; width: 90%; box-shadow: 0 20px 40px rgba(0,0,0,0.3); color: #E5E7EB; }
         .alert-icon { font-size: 4rem; margin-bottom: 20px; }
         .alert-title { font-size: 1.8rem; font-weight: bold; margin-bottom: 15px; color: #e74c3c; }
-        .alert-message { font-size: 1.2rem; margin-bottom: 25px; color: #374151; }
+        .alert-message { font-size: 1.2rem; margin-bottom: 25px; color: #D1D5DB; }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
         .status-indicator { display: inline-block; width: 12px; height: 12px; border-radius: 50%; margin-right: 8px; }
@@ -293,6 +298,19 @@
                 <div class="alert-message" id="alertMessage"></div>
                 <button class="btn" onclick="closeAlert()" style="margin-right: 10px;">Entendi</button>
                 <button class="btn" onclick="markAsPostedFromAlert(); closeAlert();" style="background: #27ae60;">✅ Marcar como Postado</button>
+            </div>
+        </div>
+        
+        <!-- Modal de confirmação para postar hoje -->
+        <div id="postTodayConfirmModal" class="modal">
+            <div class="modal-content" style="text-align: center;">
+                <div style="font-size: 2.5rem; margin-bottom: 15px;">🤔</div>
+                <h3>Postar Vídeo Hoje?</h3>
+                <p id="postTodayMessage" style="color: #9CA3AF; margin-bottom: 25px;"></p>
+                <div style="display: flex; justify-content: center; gap: 15px;">
+                    <button class="btn btn-secondary" onclick="closePostTodayConfirm()">Não, depois</button>
+                    <button class="btn" onclick="confirmPostToday()">Sim, postar hoje!</button>
+                </div>
             </div>
         </div>
 
@@ -367,12 +385,17 @@
                         <label><input type="checkbox" name="postDay" value="0">Dom</label>
                     </div>
                 </div>
-                <div class="form-group" style="margin-top: 20px;">
+                <div class="form-group" style="margin-top: 10px;">
+                     <label for="lastPostDate">Data do último vídeo postado (opcional):</label>
+                    <input type="date" id="lastPostDate">
+                    <small style="color: #9CA3AF; font-size: 0.8rem; display: block; margin-top: 5px;">Deixe em branco se o primeiro vídeo for hoje.</small>
+                </div>
+                <div class="form-group">
                     <label for="backlogCount">Quantidade de vídeos prontos (Backlog):</label>
                     <input type="number" id="backlogCount" min="0" value="0" required>
                 </div>
                 <div class="form-row">
-                    <button type="button" class="btn" onclick="closeModal()">Cancelar</button>
+                    <button type="button" class="btn btn-secondary" onclick="closeModal()">Cancelar</button>
                     <button type="submit" class="btn">Salvar Canal</button>
                 </div>
             </form>
@@ -381,28 +404,23 @@
     
     <footer>
         <p>© Organizador de Canais</p>
-        <p> Idéia original por: Ernani - WebDark</p>
-        Melhorias por: RV Tools</p>
+        <p>Idéia original por: Ernani - WebDark</p>
+		<p>Melhorias por: RV Tools</p>
     </footer>
 
     <script>
         let channels = JSON.parse(localStorage.getItem('channels')) || [];
         let currentEditingChannel = null;
         let alertChannelId = null;
+        let channelToPostTodayId = null;
         let currentCalendarDate = new Date();
         const CHANNEL_COLORS = ['#ff6b6b', '#48dbfb', '#1dd1a1', '#feca57', '#ff9f43', '#5f27cd', '#54a0ff', '#e84393', '#00d2d3', '#2e86de'];
 
-         /**
-         * BUG FIX v5.1: A lógica de 'interval' foi reescrita para usar uma data de início fixa
-         * em vez da data do último post, que causava inconsistências no calendário para canais novos.
-         * Adicionado um novo campo 'startDate' para cada canal.
-         */
         function isPostDay(channel, date) {
             const checkDate = new Date(date);
             checkDate.setHours(0, 0, 0, 0);
             const dayOfWeek = checkDate.getDay();
 
-            // Garante que o valor da frequência seja um array para evitar erros.
             if (channel.frequencyType === 'specific_days' && !Array.isArray(channel.frequencyValue)) {
                 return false; 
             }
@@ -410,29 +428,17 @@
             switch (channel.frequencyType) {
                 case 'daily':
                     return true;
-
                 case 'interval':
-                    // Se o canal não foi configurado com uma data de início, não é dia de postagem.
                     if (!channel.startDate) return false;
-
                     const startDate = new Date(channel.startDate);
                     startDate.setHours(0, 0, 0, 0);
-
-                    // Não mostra dias de postagem antes do início do agendamento.
                     if (checkDate < startDate) return false;
-
                     const diffTime = checkDate.getTime() - startDate.getTime();
                     const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
-                    
-                    // É um dia de postagem se o número de dias decorridos for um múltiplo do intervalo.
                     return diffDays % channel.frequencyValue === 0;
-
                 case 'specific_days':
-                    // O valor é um array de strings representando o dia da semana (0-6)
                     return channel.frequencyValue.includes(String(dayOfWeek));
-
                 default:
-                    // Comportamento padrão seguro caso os dados estejam inconsistentes.
                     return true;
             }
         }
@@ -499,7 +505,6 @@
             }
         }
 
-
         function changeMonth(delta) {
             currentCalendarDate.setMonth(currentCalendarDate.getMonth() + delta);
             renderCalendar();
@@ -522,13 +527,11 @@
             if (!confirmSetup) return;
             while (channels.length < count) {
                 channels.push({
-                    id: Date.now() + channels.length,
-                    name: `Canal ${channels.length + 1}`,
+                    id: Date.now() + channels.length, name: `Canal ${channels.length + 1}`,
                     nicho: '', postTime: '09:00', backlog: 0, lastPost: null,
                     configured: false, frequencyType: 'daily', frequencyValue: 1,
                     color: CHANNEL_COLORS[channels.length % CHANNEL_COLORS.length],
-                    scheduled: false,
-                    startDate: null // <-- Adicionado para a correção do bug
+                    scheduled: false, startDate: null
                 });
             }
             if (channels.length > count) { channels = channels.slice(0, count); }
@@ -633,6 +636,10 @@
             document.getElementById('channelNicho').value = channel.nicho;
             document.getElementById('postTime').value = channel.postTime;
             document.getElementById('backlogCount').value = channel.backlog;
+            
+            const lastPostDate = channel.lastPost ? new Date(channel.lastPost) : null;
+            document.getElementById('lastPostDate').value = lastPostDate ? lastPostDate.toISOString().split('T')[0] : '';
+            
             document.getElementById('frequencyType').value = channel.frequencyType || 'daily';
             toggleFrequencyOptions();
             if (channel.frequencyType === 'interval') {
@@ -649,16 +656,26 @@
             e.preventDefault();
             if (!currentEditingChannel) return;
 
-            // Se for a primeira configuração, define uma data de início para o agendamento de intervalo.
-            if (!currentEditingChannel.startDate) {
-                currentEditingChannel.startDate = new Date().toISOString();
-            }
-
+            const isFirstConfiguration = !currentEditingChannel.configured;
+            const lastPostDateValue = document.getElementById('lastPostDate').value;
+            
             currentEditingChannel.name = document.getElementById('channelName').value;
             currentEditingChannel.nicho = document.getElementById('channelNicho').value;
             currentEditingChannel.postTime = document.getElementById('postTime').value;
             currentEditingChannel.backlog = parseInt(document.getElementById('backlogCount').value);
             currentEditingChannel.configured = true;
+
+            if (lastPostDateValue) {
+                const selectedDate = new Date(lastPostDateValue);
+                const userTimezoneOffset = selectedDate.getTimezoneOffset() * 60000;
+                const correctDate = new Date(selectedDate.getTime() + userTimezoneOffset);
+                currentEditingChannel.lastPost = correctDate.toISOString();
+                currentEditingChannel.startDate = correctDate.toISOString(); 
+            } else {
+                currentEditingChannel.lastPost = null;
+                currentEditingChannel.startDate = new Date().toISOString(); 
+            }
+
             const frequencyType = document.getElementById('frequencyType').value;
             currentEditingChannel.frequencyType = frequencyType;
             if (frequencyType === 'interval') { currentEditingChannel.frequencyValue = parseInt(document.getElementById('postInterval').value);
@@ -667,11 +684,16 @@
                 document.querySelectorAll('input[name="postDay"]:checked').forEach(checkbox => selectedDays.push(checkbox.value));
                 currentEditingChannel.frequencyValue = selectedDays;
             } else { currentEditingChannel.frequencyValue = 1; }
+            
             saveChannels();
             renderChannels();
             renderCalendar();
             closeModal();
             showNotification(`${currentEditingChannel.name} configurado com sucesso!`, 'success');
+
+            if (isFirstConfiguration && !lastPostDateValue) {
+                showPostTodayConfirm(currentEditingChannel.id); 
+            }
         });
 
         function markAsPosted(id) {
@@ -742,7 +764,7 @@
                         localStorage.removeItem(key);
                     }
                 });
-                showNotification(`📅  Novo dia! Status de postagem resetado.`, 'info');
+                showNotification(`📅 Novo dia! Status de postagem resetado.`, 'info');
                 renderChannels();
             }
             localStorage.setItem('lastCheckDate', today);
@@ -801,6 +823,26 @@
             alertChannelId = channelId;
         }
 
+        function showPostTodayConfirm(channelId) {
+            const channel = channels.find(c => c.id === channelId);
+            if (!channel) return;
+            channelToPostTodayId = channelId;
+            document.getElementById('postTodayMessage').textContent = `Você configurou o canal "${channel.name}" sem uma data de último post. Deseja marcar o primeiro vídeo como postado hoje?`;
+            document.getElementById('postTodayConfirmModal').style.display = 'block';
+        }
+
+        function closePostTodayConfirm() {
+            document.getElementById('postTodayConfirmModal').style.display = 'none';
+            channelToPostTodayId = null;
+        }
+
+        function confirmPostToday() {
+            if (channelToPostTodayId) {
+                markAsPosted(channelToPostTodayId);
+            }
+            closePostTodayConfirm();
+        }
+
         function closeAlert() { document.getElementById('alertModal').style.display = 'none'; }
         function closeModal() { document.getElementById('channelModal').style.display = 'none'; }
         function saveChannels() { localStorage.setItem('channels', JSON.stringify(channels)); }
@@ -833,6 +875,7 @@
 
         document.getElementById('channelModal')?.addEventListener('click', e => { if (e.target === e.currentTarget) closeModal(); });
         document.getElementById('alertModal')?.addEventListener('click', e => { if (e.target === e.currentTarget) closeAlert(); });
+        document.getElementById('postTodayConfirmModal')?.addEventListener('click', e => { if (e.target === e.currentTarget) closePostTodayConfirm(); });
         document.addEventListener('DOMContentLoaded', init);
     </script>
 </body>
