@@ -227,7 +227,20 @@
         @keyframes blink { 0%, 50% { opacity: 1; } 51%, 100% { opacity: 0.7; } }
 
         .alert-modal, .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 2000; animation: fadeIn 0.3s ease; }
-        .alert-content, .modal-content { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: #1F2937; border: 1px solid #4B5563; padding: 30px; border-radius: 15px; max-width: 500px; width: 90%; box-shadow: 0 20px 40px rgba(0,0,0,0.3); color: #E5E7EB; }
+        .alert-content, #channelModal .modal-content, #postTodayConfirmModal .modal-content { 
+            position: absolute; 
+            top: 50%; 
+            left: 50%; 
+            transform: translate(-50%, -50%); 
+            background: #1F2937; 
+            border: 1px solid #4B5563; 
+            padding: 30px; 
+            border-radius: 15px; 
+            max-width: 500px; 
+            width: 90%; 
+            box-shadow: 0 20px 40px rgba(0,0,0,0.3); 
+            color: #E5E7EB; 
+        }
         .alert-icon { font-size: 4rem; margin-bottom: 20px; }
         .alert-title { font-size: 1.8rem; font-weight: bold; margin-bottom: 15px; color: #e74c3c; }
         .alert-message { font-size: 1.2rem; margin-bottom: 25px; color: #D1D5DB; }
@@ -278,6 +291,143 @@
             .calendar-day, .calendar-weekday { min-height: 60px; padding: 5px 2px; font-size: 0.8rem; }
             .post-indicator { width: 8px; height: 8px; }
         }
+
+		/* --- Início: Estilos do Botão Flutuante e Pop-up de Doação --- */
+		.modal-overlay {
+			position: fixed;
+			top: 0;
+			left: 0;
+			width: 100%;
+			height: 100%;
+			background-color: rgba(17, 24, 39, 0.8);
+			backdrop-filter: blur(5px);
+			z-index: 1000;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			opacity: 0;
+			visibility: hidden;
+			transition: opacity 0.3s ease, visibility 0.3s ease;
+		}
+		.modal-overlay.visible {
+			opacity: 1;
+			visibility: visible;
+		}
+        /* CORREÇÃO APLICADA AQUI */
+		#donation-modal .modal-content {
+			background-color: #1F2937;
+			border: 1px solid #4B5563;
+			border-radius: 15px;
+			padding: 30px;
+			max-width: 450px;
+			width: 90%;
+			text-align: center;
+			position: relative;
+			transform: scale(0.95);
+			transition: transform 0.3s ease;
+		}
+		.modal-overlay.visible #donation-modal .modal-content {
+			transform: scale(1);
+		}
+		#donation-modal .modal-close {
+			position: absolute;
+			top: 15px;
+			right: 15px;
+			background: none;
+			border: none;
+			color: #9CA3AF;
+			font-size: 1.5rem;
+			cursor: pointer;
+		}
+		#donation-modal .modal-icon {
+			font-size: 3rem;
+			margin-bottom: 15px;
+		}
+		#donation-modal h2 {
+			font-size: 1.8rem;
+			color: #FFF;
+			margin-bottom: 10px;
+		}
+		#donation-modal p {
+			color: #9CA3AF;
+			margin-bottom: 25px;
+		}
+		#donation-modal .btn-kofi {
+			display: block;
+			width: fit-content;
+			margin: 0 auto 20px;
+			padding: 12px 30px;
+			background-color: #FF5E5B;
+			color: white;
+			border-radius: 8px;
+			text-decoration: none;
+			font-weight: 600;
+			font-size: 1.1rem;
+			transition: background-color 0.2s;
+		}
+		#donation-modal .btn-kofi:hover {
+			background-color: #FF413C;
+		}
+		#donation-modal .pix-section {
+			background-color: #374151;
+			border-radius: 8px;
+			padding: 15px;
+		}
+		#donation-modal .pix-section span {
+			display: block;
+			color: #9CA3AF;
+			font-size: 0.9rem;
+			margin-bottom: 10px;
+		}
+		#donation-modal .pix-key-wrapper {
+			display: flex;
+			gap: 10px;
+		}
+		#donation-modal #pix-key {
+			flex-grow: 1;
+			padding: 10px;
+			background-color: #111827;
+			border: 1px solid #4B5563;
+			border-radius: 5px;
+			color: #E5E7EB;
+			text-align: center;
+			overflow: hidden;
+			text-overflow: ellipsis;
+			white-space: nowrap;
+		}
+		#donation-modal #copy-pix-btn {
+			padding: 10px 15px;
+			border: none;
+			background-color: #667eea;
+			color: white;
+			border-radius: 5px;
+			cursor: pointer;
+			font-weight: 500;
+			transition: background-color 0.2s;
+		}
+		#donation-modal #copy-pix-btn:hover {
+			background-color: #5a6fd5;
+		}
+		.floating-donate-btn {
+			position: fixed;
+			bottom: 20px;
+			right: 20px;
+			background: linear-gradient(45deg, #FF5E5B, #EC4899);
+			color: white;
+			border: none;
+			border-radius: 50px;
+			padding: 12px 24px;
+			font-size: 1rem;
+			font-weight: 600;
+			box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+			cursor: pointer;
+			z-index: 999;
+			transition: transform 0.2s ease;
+		}
+		.floating-donate-btn:hover {
+			transform: scale(1.05);
+		}
+		/* --- Fim: Estilos do Botão Flutuante e Pop-up de Doação --- */
     </style>
 </head>
 <body>
@@ -402,6 +552,31 @@
         </div>
     </div>
     
+	<!-- Pop-up de Doação -->
+	<div class="modal-overlay" id="donation-modal">
+		<div class="modal-content">
+			<button class="modal-close" id="close-donation-modal-btn">&times;</button>
+			<div class="modal-icon">❤️</div>
+			<h2>Apoie esta Ferramenta</h2>
+			<p>Se você acha esta ferramenta útil, considere fazer uma doação para ajudar a mantê-la online e em constante desenvolvimento. Qualquer valor ajuda!</p>
+			
+			<a href="https://ko-fi.com/rvtools" target="_blank" class="btn-kofi">Me pague um café no Ko-fi</a>
+
+			<div class="pix-section">
+				<span>Ou faça uma doação via Pix</span>
+				<div class="pix-key-wrapper">
+					<div id="pix-key">00020126930014BR.GOV.BCB.PIX0136d6fd79f9-44ca-44da-9b6e-313fc1c2f11f0231Muito obrigado pela sua doação!5204000053039865802BR5924Rafael Morais Dias Vidal6009SAO PAULO62140510OAw2TlS2ui630428C6</div>
+					<button id="copy-pix-btn">Copiar Chave</button>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<!-- Botão Flutuante de Doação -->
+	<button id="floating-donate-btn" class="floating-donate-btn">
+		❤️ Apoiar
+	</button>
+	
     <footer>
         <p>© Organizador de Canais</p>
         <p>Idéia original por: Ernani - WebDark</p>
@@ -872,11 +1047,48 @@
             setTimeout(checkPostingTimes, 2000);
             setTimeout(checkAdvanceNotifications, 3000);
         }
+        
+        document.addEventListener('DOMContentLoaded', () => {
+			init();
 
-        document.getElementById('channelModal')?.addEventListener('click', e => { if (e.target === e.currentTarget) closeModal(); });
-        document.getElementById('alertModal')?.addEventListener('click', e => { if (e.target === e.currentTarget) closeAlert(); });
-        document.getElementById('postTodayConfirmModal')?.addEventListener('click', e => { if (e.target === e.currentTarget) closePostTodayConfirm(); });
-        document.addEventListener('DOMContentLoaded', init);
+			const donationModal = document.getElementById('donation-modal');
+			const closeDonationModalBtn = document.getElementById('close-donation-modal-btn');
+			const copyPixBtn = document.getElementById('copy-pix-btn');
+			const pixKey = document.getElementById('pix-key');
+			const floatingDonateBtn = document.getElementById('floating-donate-btn');
+
+			const openDonationModal = () => {
+				if (donationModal) donationModal.classList.add('visible');
+			};
+
+			const closeDonationModal = () => {
+				if (donationModal) donationModal.classList.remove('visible');
+			};
+
+			if (floatingDonateBtn) floatingDonateBtn.addEventListener('click', openDonationModal);
+			if (closeDonationModalBtn) closeDonationModalBtn.addEventListener('click', closeDonationModal);
+			if (donationModal) {
+				donationModal.addEventListener('click', (e) => {
+					if (e.target === donationModal) closeDonationModal();
+				});
+			}
+
+			if (copyPixBtn && pixKey) {
+				copyPixBtn.addEventListener('click', () => {
+					navigator.clipboard.writeText(pixKey.textContent).then(() => {
+						const originalText = copyPixBtn.textContent;
+						copyPixBtn.textContent = 'Copiado!';
+						copyPixBtn.style.backgroundColor = '#10B981';
+						setTimeout(() => {
+							copyPixBtn.textContent = originalText;
+							copyPixBtn.style.backgroundColor = '#667eea';
+						}, 2000);
+					}).catch(err => {
+						alert('Falha ao copiar a chave Pix.');
+					});
+				});
+			}
+		});
     </script>
 </body>
 </html>

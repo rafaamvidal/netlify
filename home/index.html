@@ -3,106 +3,638 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Creators Tools</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <title>Creators Tools - Painel de Ferramentas</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         body {
             font-family: 'Inter', sans-serif;
-            background-color: #111827; /* Fundo cinza escuro */
+            background-color: #111827;
             background-image: radial-gradient(circle at 1px 1px, #374151 1px, transparent 0);
             background-size: 20px 20px;
+            color: #E5E7EB;
+            margin: 0;
+            padding: 40px 20px;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 50px;
+        }
+        .header h1 {
+            font-size: 3rem;
+            font-weight: 700;
+            color: #FFF;
+            margin-bottom: 10px;
+        }
+        .header h1 span {
+            background: linear-gradient(45deg, #8B5CF6, #EC4899);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .header p {
+            font-size: 1.1rem;
+            color: #9CA3AF;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        .category-section {
+            margin-bottom: 50px;
+        }
+        .category-title {
+            font-size: 1.8rem;
+            font-weight: 600;
+            color: #FFF;
+            margin-bottom: 25px;
+            border-bottom: 2px solid #4B5563;
+            padding-bottom: 10px;
+        }
+        .tools-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 25px;
         }
         .tool-card {
-            background: rgba(31, 41, 55, 0.5); /* Fundo semi-transparente */
-            border: 1px solid #4B5563; /* Borda sutil */
+            background: rgba(31, 41, 55, 0.5);
             backdrop-filter: blur(10px);
-            transition: all 0.3s ease;
+            border: 1px solid #4B5563;
+            border-radius: 15px;
+            padding: 25px;
+            text-decoration: none;
+            color: #E5E7EB;
+            transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+            display: flex;
+            flex-direction: column;
         }
         .tool-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+            border-color: #8B5CF6;
+        }
+        .tool-card-header {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+        .tool-icon {
+            font-size: 2rem;
+        }
+        .tool-card h2 {
+            font-size: 1.25rem;
+            color: #FFF;
+            margin: 0;
+        }
+        .tool-card p {
+            font-size: 0.95rem;
+            color: #9CA3AF;
+            line-height: 1.5;
+            flex-grow: 1; 
+        }
+        .status-badge {
+            margin-top: 20px;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 500;
+            align-self: flex-start;
+        }
+        .status-online {
+            background-color: #10B981;
+            color: #FFF;
+        }
+        .status-new {
+            background-color: #3B82F6;
+            color: #FFF;
+        }
+        .status-soon {
+            background-color: #6B7280;
+            color: #E5E7EB;
+        }
+        
+        .content-box {
+            background: rgba(31, 41, 55, 0.5);
+            backdrop-filter: blur(10px);
+            border: 1px solid #4B5563;
+            border-radius: 15px;
+            padding: 30px;
+            margin-top: 50px;
+        }
+        .content-box h2 {
+            text-align: center;
+            font-size: 1.5rem;
+            color: #FFF;
+            margin-bottom: 10px;
+        }
+        .content-box p {
+            text-align: center;
+            font-size: 1rem;
+            color: #9CA3AF;
+            margin-bottom: 30px;
+        }
+
+        .suggestion-box .form-group {
+            margin-bottom: 20px;
+        }
+        .suggestion-box label {
+            display: block;
+            margin-bottom: 8px;
+            font-size: 0.9rem;
+            color: #D1D5DB;
+        }
+        .suggestion-box input, .suggestion-box textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #4B5563;
+            background-color: #374151;
+            color: #FFF;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: border-color 0.3s ease;
+            resize: vertical;
+        }
+        .suggestion-box input:focus, .suggestion-box textarea:focus {
+            outline: none;
             border-color: #764ba2;
-            transform: translateY(-5px) scale(1.02);
-            box-shadow: 0 10px 30px rgba(118, 75, 162, 0.2);
+        }
+        .suggestion-box .btn {
+            width: 100%;
+            padding: 15px;
+            font-size: 1.1rem;
+            background: #10B981;
+            color: #FFF;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+
+        /* Estilos do Leaderboard */
+        .donors-list {
+            max-height: 250px;
+            overflow-y: auto;
+            padding-right: 10px;
+        }
+        .donor-item {
+            display: flex;
+            align-items: center;
+            padding: 12px 15px;
+            background-color: #374151;
+            border-radius: 8px;
+            margin-bottom: 10px;
+        }
+        .donor-rank {
+            font-size: 1.2rem;
+            width: 40px;
+            text-align: center;
+            color: #9CA3AF;
+            font-weight: 600;
+        }
+        .donor-name {
+            flex-grow: 1;
+            font-weight: 500;
+            color: #E5E7EB;
+        }
+        .donor-amount {
+            font-weight: 600;
+            color: #10B981;
+        }
+        
+        /* Estilos Genéricos dos Pop-ups */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(17, 24, 39, 0.8);
+            backdrop-filter: blur(5px);
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease, visibility 0.3s ease;
+        }
+        .modal-overlay.visible {
+            opacity: 1;
+            visibility: visible;
+        }
+        .modal-content {
+            background-color: #1F2937;
+            border: 1px solid #4B5563;
+            border-radius: 15px;
+            padding: 30px;
+            max-width: 450px;
+            width: 90%;
+            text-align: center;
+            position: relative;
+            transform: scale(0.95);
+            transition: transform 0.3s ease;
+        }
+        .modal-overlay.visible .modal-content {
+            transform: scale(1);
+        }
+        .modal-close {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: none;
+            border: none;
+            color: #9CA3AF;
+            font-size: 1.5rem;
+            cursor: pointer;
+        }
+        .modal-icon {
+            font-size: 3rem;
+            margin-bottom: 15px;
+        }
+        .modal-content h2 {
+            font-size: 1.8rem;
+            color: #FFF;
+            margin-bottom: 10px;
+        }
+        .modal-content p {
+            color: #9CA3AF;
+            margin-bottom: 25px;
+        }
+		.btn-kofi {
+			display: block;
+			width: fit-content;
+			margin: 0 auto 20px;
+			padding: 12px 30px;
+			background-color: #FF5E5B;
+			color: white;
+			border-radius: 8px;
+			text-decoration: none;
+			font-weight: 600;
+			font-size: 1.1rem;
+			transition: background-color 0.2s;
+		}
+        .btn-kofi:hover {
+            background-color: #FF413C;
+        }
+        .pix-section {
+            background-color: #374151;
+            border-radius: 8px;
+            padding: 15px;
+        }
+        .pix-section span {
+            display: block;
+            color: #9CA3AF;
+            font-size: 0.9rem;
+            margin-bottom: 10px;
+        }
+        .pix-key-wrapper {
+            display: flex;
+            gap: 10px;
+        }
+        #pix-key {
+            flex-grow: 1;
+            padding: 10px;
+            background-color: #111827;
+            border: 1px solid #4B5563;
+            border-radius: 5px;
+            color: #E5E7EB;
+            text-align: center;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        #copy-pix-btn {
+            padding: 10px 15px;
+            border: none;
+            background-color: #667eea;
+            color: white;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: background-color 0.2s;
+        }
+        #copy-pix-btn:hover {
+            background-color: #5a6fd5;
+        }
+
+        /* Estilos do Pop-up de Atualizações */
+        .updates-list {
+            list-style: none;
+            padding: 0;
+            text-align: left;
+            margin-bottom: 25px;
+            max-height: 200px;
+            overflow-y: auto;
+            padding-right: 10px;
+        }
+        .update-item {
+            display: flex;
+            align-items: flex-start;
+            margin-bottom: 12px;
+            color: #E5E7EB;
+        }
+        .update-badge {
+            flex-shrink: 0;
+            padding: 3px 10px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            margin-right: 12px;
+            color: #FFF;
+        }
+        .update-badge.new { background-color: #3B82F6; }
+        .update-badge.improved { background-color: #F59E0B; }
+        .update-badge.fixed { background-color: #10B981; }
+        .update-version {
+            font-size: 0.9rem;
+            color: #9CA3AF;
+            margin-bottom: 20px;
+        }
+        
+        footer {
+            text-align: center;
+            padding: 40px 20px 20px;
+            color: #9CA3AF;
+            font-size: 0.9rem;
         }
     </style>
 </head>
-<body class="text-gray-200">
-
-    <div class="min-h-screen flex flex-col items-center justify-center p-4">
-        <div class="container mx-auto max-w-4xl">
-            <header class="text-center mb-12">
-                <h1 class="text-4xl md:text-6xl font-black text-white mb-3">
-                    Creators Tools
-                </h1>
-                <p class="text-lg md:text-xl text-gray-400">
-                    Suas ferramentas para criadores de conteúdo em um só lugar.
-                </p>
-            </header>
-    
-            <main>
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                    <!-- Card 1: Organizador de Canais (Ativo) -->
-                    <a href="organizador-canais.html" class="tool-card rounded-2xl p-6 flex flex-col items-start group">
-                        <div class="mb-4 bg-purple-500/10 p-3 rounded-lg border border-purple-500/30">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-purple-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                            </svg>
-                        </div>
-                        <h2 class="text-xl font-bold text-white mb-2">Organizador de Canais</h2>
-                        <p class="text-gray-400 text-sm flex-grow mb-4">
-                            Gerencie a frequência e o agendamento de postagens dos seus canais.
-                        </p>
-                        <span class="text-purple-400 font-semibold flex items-center gap-2">
-                            Acessar Ferramenta
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 transition-transform group-hover:translate-x-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3" />
-                            </svg>
-                        </span>
-                    </a>
-    
-                    <!-- Card 2: Gerador de Legendas (Ativo) -->
-                    <a href="gerador-srt.html" class="tool-card rounded-2xl p-6 flex flex-col items-start group">
-                         <div class="mb-4 bg-blue-500/10 p-3 rounded-lg border border-blue-500/30">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" />
-                            </svg>
-                        </div>
-                        <h2 class="text-xl font-bold text-white mb-2">Gerador de Legendas</h2>
-                        <p class="text-gray-400 text-sm flex-grow mb-4">
-                            Crie arquivos de legenda .SRT a partir de um roteiro de forma simples e rápida.
-                        </p>
-                        <span class="text-blue-400 font-semibold flex items-center gap-2">
-                            Acessar Ferramenta
-                             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 transition-transform group-hover:translate-x-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3" />
-                            </svg>
-                        </span>
-                    </a>
-    
-                    <!-- Card 3: Em Breve -->
-                     <div class="tool-card rounded-2xl p-6 flex flex-col items-start opacity-50 cursor-not-allowed">
-                        <div class="mb-4 bg-gray-500/10 p-3 rounded-lg border border-gray-500/30">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z" />
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M20.488 9H15V3.512A9.025 9.025 0 0120.488 9z" />
-                            </svg>
-                        </div>
-                        <h2 class="text-xl font-bold text-white mb-2">Analisador de Métricas</h2>
-                        <p class="text-gray-400 text-sm flex-grow mb-4">
-                            Visualize o desempenho dos seus vídeos com gráficos simples.
-                        </p>
-                        <span class="text-gray-500 font-semibold">Em Breve</span>
-                    </div>
-                </div>
-            </main>
-    
+<body>
+    <div class="container">
+        <div class="header">
+            <h1><span>Creators</span> Tools</h1>
+            <p>Um conjunto de ferramentas simples e modernas para auxiliar criadores de conteúdo e otimizar seu fluxo de trabalho diário.</p>
         </div>
-        <footer class="text-center mt-16 text-gray-500">
-            <p>© RV Tools</p>
-        </footer>
+
+       <!-- Categoria: Planejamento e Roteirização -->
+        <section class="category-section">
+            <h2 class="category-title">🧠 Planeamento e Roteirização</h2>
+            <div class="tools-grid">
+                <a href="organizador-canais.html" class="tool-card">
+                    <div class="tool-card-header"><div class="tool-icon">🗓️</div><h2>Organizador de Canais</h2></div>
+                    <p>Planeie as suas postagens, controle o backlog e nunca mais perca um prazo com o calendário integrado.</p>
+                    <div class="status-badge status-online">Online</div>
+                </a>
+                <a href="analisador-roteiro.html" class="tool-card">
+                    <div class="tool-card-header"><div class="tool-icon">⏱️</div><h2>Analisador de Roteiro</h2></div>
+                    <p>Conte palavras, caracteres e estime o tempo de leitura do seu roteiro em tempo real.</p>
+                    <div class="status-badge status-new">Novo</div>
+                </a>
+				<a href="#" class="tool-card" style="cursor: not-allowed; opacity: 0.6;">
+					<div class="tool-card-header"><div class="tool-icon">🌐</div><h2>Tradutor de Roteiro (IA)</h2></div>
+					<p>Traduza os seus roteiros para outros idiomas e alcance uma audiência global com o poder da IA.</p>
+					<div class="status-badge status-soon">Em breve</div>
+				</a>
+				<a href="#" class="tool-card" style="cursor: not-allowed; opacity: 0.6;">
+                    <div class="tool-card-header"><div class="tool-icon">💡</div><h2>Gerador de Ideias (IA)</h2></div>
+                    <p>Receba sugestões de títulos e roteiros para os seus próximos vídeos utilizando inteligência artificial.</p>
+					<div class="status-badge status-soon">Em breve</div>
+                </a>
+            </div>
+        </section>
+
+        <!-- Categoria: Produção e Pós-produção -->
+        <section class="category-section">
+            <h2 class="category-title">🎬 Produção e Pós-produção</h2>
+            <div class="tools-grid">
+                 <a href="gerador-srt.html" class="tool-card">
+                    <div class="tool-card-header"><div class="tool-icon">📑</div><h2>Gerador roteiro .srt</h2></div>
+                    <p>Monte seu roteiro e crie legendas SRT com um clique.</p>
+                    <div class="status-badge status-online">Online</div>
+                </a>			
+                 <a href="gerador-srt-massa.html" class="tool-card">
+                    <div class="tool-card-header"><div class="tool-icon">📑</div><h2>Gerador .srt em Massa</h2></div>
+                    <p>Crie vários ficheiros de legenda .SRT de uma só vez a partir dos seus roteiros em .txt ou .docx.</p>
+                    <div class="status-badge status-new">Novo</div>
+                </a>
+                <a href="removedor-de-silencio.html" class="tool-card">
+                    <div class="tool-card-header"><div class="tool-icon">🔇</div><h2>Removedor de Silêncio</h2></div>
+                    <p>Faça upload de um áudio, remova as partes silenciosas e descarregue o resultado limpo em MP3.</p>
+                    <div class="status-badge status-new">Novo</div>
+                </a>
+                <a href="#" class="tool-card" style="cursor: not-allowed; opacity: 0.6;">
+                    <div class="tool-card-header"><div class="tool-icon">🖼️</div><h2>Gerador de Thumbnail (IA)</h2></div>
+                    <p>Transforme as suas ideias em prompts de imagem detalhados para criar thumbnails de alto impacto.</p>
+                    <div class="status-badge status-soon">Em breve</div>
+                </a>
+                <a href="#" class="tool-card" style="cursor: not-allowed; opacity: 0.6;">
+                    <div class="tool-card-header"><div class="tool-icon">📄</div><h2>Gerador de post</h2></div>
+                    <p>Gere posts para a aba comunidade do seu canal de forma muito mais rápida.</p>
+                    <div class="status-badge status-soon">Em breve</div>
+                </a>				
+            </div>
+        </section>
+
+        <!-- Categoria: Análise e Estratégia -->
+        <section class="category-section">
+            <h2 class="category-title">📊 Análise e Estratégia</h2>
+            <div class="tools-grid">
+                <a href="#" class="tool-card" style="cursor: not-allowed; opacity: 0.6;">
+                    <div class="tool-card-header"><div class="tool-icon">🔍</div><h2>Análise de Canal (IA)</h2></div>
+                    <p>Utilize o poder da IA para fazer uma análise completa de qualquer canal no YouTube.</p>
+                    <div class="status-badge status-soon">Em breve</div>
+                </a>
+                <a href="#" class="tool-card" style="cursor: not-allowed; opacity: 0.6;">
+                    <div class="tool-card-header"><div class="tool-icon">💬</div><h2>Analisador de Vídeo (IA)</h2></div>
+                    <p>Extraia insights, resumos e sugestões a partir do título, descrição e comentários de um vídeo.</p>
+                    <div class="status-badge status-soon">Em breve</div>
+                </a>
+                <a href="#" class="tool-card" style="cursor: not-allowed; opacity: 0.6;">
+                    <div class="tool-card-header"><div class="tool-icon">📈</div><h2>Análise de Métricas</h2></div>
+                    <p>Obtenha uma análise rápida de acordo com as métricas basicas do seu vídeo.</p>
+                    <div class="status-badge status-soon">Em breve</div>
+                </a>				
+                <a href="#" class="tool-card" style="cursor: not-allowed; opacity: 0.6;">
+                    <div class="tool-card-header"><div class="tool-icon">📈</div><h2>Projetor de Performance</h2></div>
+                    <p>Cole os dados do seu vídeo e receba uma projeção de performance com análise estratégica da IA.</p>
+                    <div class="status-badge status-soon">Em breve</div>
+                </a>
+            </div>
+        </section>
+
+        <!-- Leaderboard de Doadores -->
+        <div class="content-box leaderboard-box">
+            <h2>🏆 Hall de Apoiadores</h2>
+            <p>Um agradecimento especial a todos que apoiam este projeto. Sua ajuda é fundamental!</p>
+            <div class="donors-list" id="donors-list">
+                <!-- A lista será populada via JavaScript -->
+            </div>
+        </div>
+
+        <!-- Bloco de Sugestões -->
+        <div class="content-box suggestion-box">
+            <h2>Tem uma ideia ou sugestão?</h2>
+            <p>Adoraria ouvir seu feedback! Envie sugestões de novas ferramentas, melhorias ou relate um bug.</p>
+            <form name="suggestions" method="POST" data-netlify="true" id="suggestion-form">
+                <input type="hidden" name="form-name" value="suggestions" />
+                <div class="form-group">
+                    <label for="sug-email">Seu Email (opcional, para contato)</label>
+                    <input type="email" name="email" id="sug-email" placeholder="seuemail@exemplo.com">
+                </div>
+                <div class="form-group">
+                    <label for="sug-message">Sua Sugestão</label>
+                    <textarea name="suggestion" id="sug-message" rows="4" placeholder="Eu adoraria uma ferramenta que..." required></textarea>
+                </div>
+                <button type="submit" class="btn">Enviar Feedback</button>
+            </form>
+            <div id="form-success-message" style="display: none; color: #10B981; margin-top: 15px; text-align: center; font-weight: 500;">
+                Obrigado! Sua sugestão foi enviada com sucesso.
+            </div>
+        </div>
     </div>
+    
+    <!-- Pop-up de Doação -->
+    <div class="modal-overlay" id="donation-modal">
+        <div class="modal-content">
+            <button class="modal-close" id="close-donation-modal-btn">&times;</button>
+            <div class="modal-icon">❤️</div>
+            <h2>Apoie esta Ferramenta</h2>
+            <p>Se você acha esta ferramenta útil, considere fazer uma doação para ajudar a mantê-la online e em constante desenvolvimento. Qualquer valor ajuda!</p>
+            
+            <a href="https://ko-fi.com/rvtools" target="_blank" class="btn-kofi">Me pague um café no Ko-fi</a>
+
+            <div class="pix-section">
+                <span>Ou faça uma doação via Pix</span>
+                <div class="pix-key-wrapper">
+                    <div id="pix-key">00020126930014BR.GOV.BCB.PIX0136d6fd79f9-44ca-44da-9b6e-313fc1c2f11f0231Muito obrigado pela sua doação!5204000053039865802BR5924Rafael Morais Dias Vidal6009SAO PAULO62140510OAw2TlS2ui630428C6</div>
+                    <button id="copy-pix-btn">Copiar Chave</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Pop-up de Atualizações -->
+    <div class="modal-overlay" id="updates-modal">
+        <div class="modal-content">
+            <button class="modal-close" id="close-updates-modal-btn">&times;</button>
+            <div class="modal-icon">🚀</div>
+            <h2>O que há de novo?</h2>
+            <p class="update-version">Versão 1.4.0 - Setembro 2025</p>
+            <ul class="updates-list">
+				<li class="update-item"><span class="update-badge new">Novo</span>Nova ferramenta para remover silencio de arquivos mp3.</li>
+				<li class="update-item"><span class="update-badge new">Novo</span>Nova ferramenta para gerar arquivos .srt em massa.</li>
+                <li class="update-item"><span class="update-badge new">Novo</span>Nova ferramenta para analisar tempo de duração do roteiro.</li>
+                <li class="update-item"><span class="update-badge new">Novo</span>Hall da fama de apoiadores.</li>
+                <li class="update-item"><span class="update-badge new">Novo</span>Inclusão de formulário para sugestões ou correções.</li>
+                <li class="update-item"><span class="update-badge new">Melhoria</span>Nova interface mais moderna e intuitiva.</li>
+                <li class="update-item"><span class="update-badge improved">Melhoria</span>Página inicial agora organizada por categorias.</li>
+                <li class="update-item"><span class="update-badge fixed">Correção</span>Diversas correções de bugs e melhorias de performance.</li>
+            </ul>
+        </div>
+    </div>
+
+    <footer>
+        <p>Criado por: RV Tools com assistência do Gemini</p>
+    </footer>
+    
+    <script>
+        // Lógica do formulário de sugestão
+        const suggestionForm = document.getElementById('suggestion-form');
+        suggestionForm.addEventListener('submit', event => {
+            event.preventDefault();
+            const myForm = event.target;
+            const formData = new FormData(myForm);
+            
+            fetch('/', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: new URLSearchParams(formData).toString()
+            })
+            .then(() => {
+                const successMessage = document.getElementById('form-success-message');
+                successMessage.style.display = 'block';
+                myForm.reset();
+                setTimeout(() => {
+                    successMessage.style.display = 'none';
+                }, 5000);
+            })
+            .catch(error => alert("Ocorreu um erro ao enviar sua sugestão."));
+        });
+
+        // Lógica dos Pop-ups, Leaderboard e Tema
+        document.addEventListener('DOMContentLoaded', () => {
+            const donationModal = document.getElementById('donation-modal');
+            const closeDonationModalBtn = document.getElementById('close-donation-modal-btn');
+            const updatesModal = document.getElementById('updates-modal');
+            const closeUpdatesModalBtn = document.getElementById('close-updates-modal-btn');
+            const copyPixBtn = document.getElementById('copy-pix-btn');
+            const pixKey = document.getElementById('pix-key');
+            const donorsList = document.getElementById('donors-list');
+
+            // --- Lógica dos Pop-ups Sequenciais ---
+            const showDonationPopup = () => {
+                if (!sessionStorage.getItem('donationPopupShown')) {
+                    setTimeout(() => {
+                        donationModal.classList.add('visible');
+                        sessionStorage.setItem('donationPopupShown', 'true');
+                    }, 3000);
+                }
+            };
+            
+            const showUpdatesPopup = () => {
+                if (!sessionStorage.getItem('updatesPopupShown')) {
+                    updatesModal.classList.add('visible');
+                    sessionStorage.setItem('updatesPopupShown', 'true');
+                }
+            };
+
+            const closeDonationModal = () => {
+                donationModal.classList.remove('visible');
+                showUpdatesPopup(); 
+            };
+            
+            const closeUpdatesModal = () => {
+                updatesModal.classList.remove('visible');
+            };
+
+            showDonationPopup();
+
+            closeDonationModalBtn.addEventListener('click', closeDonationModal);
+            donationModal.addEventListener('click', (e) => {
+                if (e.target === donationModal) closeDonationModal();
+            });
+            
+            closeUpdatesModalBtn.addEventListener('click', closeUpdatesModal);
+            updatesModal.addEventListener('click', (e) => {
+                if (e.target === updatesModal) closeUpdatesModal();
+            });
+
+            // --- Lógica do Botão Copiar Pix ---
+            copyPixBtn.addEventListener('click', () => {
+                navigator.clipboard.writeText(pixKey.textContent).then(() => {
+                    const originalText = copyPixBtn.textContent;
+                    copyPixBtn.textContent = 'Copiado!';
+                    copyPixBtn.style.backgroundColor = '#10B981';
+                    setTimeout(() => {
+                        copyPixBtn.textContent = originalText;
+                        copyPixBtn.style.backgroundColor = '#667eea';
+                    }, 2000);
+                }).catch(err => {
+                    alert('Falha ao copiar a chave Pix.');
+                });
+            });
+
+            // --- Lógica do Leaderboard ---
+            const donors = [
+                { name: 'Carlos Silva', amount: 5.00 },
+                { name: 'Maria Oliveira', amount: 3.50 },
+                { name: 'João Pereira', amount: 3.00 },
+                { name: 'Ana Costa', amount: 1.50 },
+            ].sort((a, b) => b.amount - a.amount);
+
+            const medals = ['🥇', '🥈', '🥉'];
+
+            donorsList.innerHTML = donors.map((donor, index) => `
+                <div class="donor-item">
+                    <div class="donor-rank">${medals[index] || index + 1}</div>
+                    <div class="donor-name">${donor.name}</div>
+                    <div class="donor-amount">R$ ${donor.amount.toFixed(2).replace('.', ',')}</div>
+                </div>
+            `).join('');
+        });
+    </script>
 </body>
 </html>
 

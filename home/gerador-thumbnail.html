@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gerador de Thumbnail (IA) - Creators Tools</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #111827;
+        }
+        .glassmorphism {
+            background: rgba(31, 41, 55, 0.5);
+            backdrop-filter: blur(10px);
+            border: 1px solid #4B5563;
+        }
+        .form-input, .form-select, .form-range {
+            background-color: #374151;
+            border: 1px solid #4B5563;
+            color: #F3F4F6;
+            border-radius: 0.5rem;
+            width: 100%;
+            transition: all 0.2s ease-in-out;
+        }
+        .form-input, .form-select {
+             padding: 0.75rem 1rem;
+        }
+        .form-input:focus, .form-select:focus {
+            outline: none;
+            border-color: #8B5CF6;
+            box-shadow: 0 0 0 2px rgba(139, 92, 246, 0.4);
+        }
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
+            font-weight: 600;
+            transition: all 0.2s ease-in-out;
+            cursor: pointer;
+            border: none;
+        }
+        .btn-primary {
+            background-color: #8B5CF6;
+            color: white;
+        }
+        .btn-primary:hover {
+            background-color: #7C3AED;
+        }
+        .btn-secondary {
+            background-color: #4B5563;
+            color: #F3F4F6;
+        }
+        .btn-secondary:hover {
+            background-color: #6B7280;
+        }
+        .loader {
+            width: 20px;
+            height: 20px;
+            border: 2px solid #FFF;
+            border-bottom-color: transparent;
+            border-radius: 50%;
+            display: inline-block;
+            box-sizing: border-box;
+            animation: rotation 1s linear infinite;
+            margin-left: 8px;
+        }
+        @keyframes rotation {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        details > summary { list-style: none; cursor: pointer; }
+        details > summary::-webkit-details-marker { display: none; }
+        details summary .arrow { transition: transform 0.2s; }
+        details[open] summary .arrow { transform: rotate(90deg); }
+    </style>
+</head>
+<body class="text-gray-200">
+
+    <div class="min-h-screen w-full p-4 sm:p-6 lg:p-8">
+        <div class="max-w-7xl mx-auto">
+            
+            <header class="relative text-center mb-8 p-8 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600">
+                 <a href="index.html" class="absolute top-4 left-4 btn btn-secondary bg-white/20 hover:bg-white/30 text-sm py-2 px-3">&larr; Voltar ao Painel</a>
+                <h1 class="text-4xl sm:text-5xl font-bold text-white">🖼️ Gerador de Thumbnail (IA)</h1>
+                <p class="mt-2 text-lg text-indigo-200">Transforme suas ideias em prompts de imagem de alto impacto.</p>
+            </header>
+
+            <main class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                
+                <div class="flex flex-col gap-8">
+                    
+                    <details class="glassmorphism p-6 rounded-xl">
+                        <summary class="flex justify-between items-center">
+                            <h2 class="text-2xl font-semibold text-white">⚙️ Configuração de API</h2>
+                            <span class="arrow text-white text-2xl">▶</span>
+                        </summary>
+                        <div class="mt-6 space-y-4">
+                            <div>
+                                <label for="geminiApiKey" class="block text-sm font-medium text-gray-300 mb-1">Chave de API (Gemini)</label>
+                                <input type="password" id="geminiApiKey" class="form-input" placeholder="Cole sua chave do Google AI Studio aqui">
+                            </div>
+                        </div>
+                    </details>
+
+                    <div class="glassmorphism p-6 rounded-xl">
+                        <div class="flex justify-between items-center mb-4">
+                            <h2 class="text-2xl font-semibold text-white">📝 Direção de Arte</h2>
+                            <button id="uploadBtn" class="btn btn-secondary text-sm py-2 px-3">Carregar .txt</button>
+                            <input type="file" id="fileInput" class="hidden" accept=".txt">
+                        </div>
+                        
+                        <div class="space-y-4">
+                            <div>
+                                <label for="script" class="block text-sm font-medium text-gray-300 mb-1">Roteiro, Descrição ou Tema (Obrigatório)</label>
+                                <textarea id="script" rows="3" class="form-input" placeholder="Forneça o contexto principal para a IA..."></textarea>
+                            </div>
+                            <div>
+                                <label for="principalElement" class="block text-sm font-medium text-gray-300 mb-1">Personagem / Elemento Principal</label>
+                                <textarea id="principalElement" rows="2" class="form-input" placeholder="Descreva o personagem ou elemento principal da cena..."></textarea>
+                            </div>
+                            <div>
+                                <label for="secondaryElement" class="block text-sm font-medium text-gray-300 mb-1">Personagem / Elemento Secundário (Opcional)</label>
+                                <textarea id="secondaryElement" rows="2" class="form-input" placeholder="Descreva o personagem secundário, se houver..."></textarea>
+                            </div>
+                             <div>
+                                <label for="backgroundElements" class="block text-sm font-medium text-gray-300 mb-1">Cenário / Demais Elementos (Opcional)</label>
+                                <textarea id="backgroundElements" rows="2" class="form-input" placeholder="Descreva o cenário e outros elementos de fundo..."></textarea>
+                            </div>
+                            
+                            <div class="border-t border-gray-700 pt-4">
+                                <h3 class="text-lg font-semibold text-white mb-2">Controle de Composição</h3>
+                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                    <div>
+                                        <label for="charPosition" class="block text-sm font-medium text-gray-300 mb-1">Posição do Protagonista</label>
+                                        <select id="charPosition" class="form-select">
+                                            <option value="on the left">Esquerda</option>
+                                            <option value="in the center">Centro</option>
+                                            <option value="on the right" selected>Direita</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label for="charSize" class="block text-sm font-medium text-gray-300 mb-1">Tamanho do Protagonista (<span id="charSizeLabel">50</span>%)</label>
+                                        <input type="range" id="charSize" min="20" max="80" value="50" class="form-range h-2 bg-gray-600 rounded-lg appearance-none cursor-pointer">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex flex-col gap-8">
+                    
+                    <div class="glassmorphism p-6 rounded-xl h-full flex flex-col">
+                        <h2 class="text-2xl font-semibold mb-4 text-white">✨ Prompt Gerado</h2>
+                        <div class="relative w-full flex-grow">
+                            <textarea id="generatedPrompt" rows="6" class="form-input h-full pr-16" placeholder="O prompt para a IA de imagem aparecerá aqui..."></textarea>
+                            <button id="copyPromptBtn" class="absolute top-2 right-2 btn btn-secondary text-xs py-1 px-2">Copiar</button>
+                        </div>
+                        <div class="mt-4 flex flex-col">
+                            <button id="generatePromptBtn" class="btn btn-secondary w-full">
+                                <span>Gerar Prompt com Gemini</span>
+                                <div id="promptLoader" class="loader hidden"></div>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="glassmorphism p-6 rounded-xl h-full flex flex-col">
+                        <h2 class="text-2xl font-semibold mb-4 text-white">🔗 Ferramentas Recomendadas</h2>
+                        <p class="text-indigo-200 mb-6">Copie o prompt e cole em uma das IAs abaixo para criar sua imagem:</p>
+                        <div class="space-y-3">
+                            <a href="https://ideogram.ai/" target="_blank" rel="noopener noreferrer" class="block w-full text-center p-3 rounded-lg bg-gray-700 hover:bg-gray-600 transition-colors font-semibold">Ideogram</a>
+                            <a href="https://www.leonardo.ai/" target="_blank" rel="noopener noreferrer" class="block w-full text-center p-3 rounded-lg bg-gray-700 hover:bg-gray-600 transition-colors font-semibold">Leonardo.Ai</a>
+                            <a href="https://www.midjourney.com/" target="_blank" rel="noopener noreferrer" class="block w-full text-center p-3 rounded-lg bg-gray-700 hover:bg-gray-600 transition-colors font-semibold">Midjourney</a>
+                            <a href="https://labs.google/fx/pt/tools/image-fx" target="_blank" rel="noopener noreferrer" class="block w-full text-center p-3 rounded-lg bg-gray-700 hover:bg-gray-600 transition-colors font-semibold">Google ImageFX</a>
+							<a href="https://labs.google/fx/pt/tools/whisk" target="_blank" rel="noopener noreferrer" class="block w-full text-center p-3 rounded-lg bg-gray-700 hover:bg-gray-600 transition-colors font-semibold">Google Whisk</a>
+							<a href="https://aistudio.google.com/prompts/new_image" target="_blank" rel="noopener noreferrer" class="block w-full text-center p-3 rounded-lg bg-gray-700 hover:bg-gray-600 transition-colors font-semibold">Google Ai Studio</a>
+                            <a href="https://firefly.adobe.com/" target="_blank" rel="noopener noreferrer" class="block w-full text-center p-3 rounded-lg bg-gray-700 hover:bg-gray-600 transition-colors font-semibold">Adobe Firefly</a>
+                        </div>
+                    </div>
+                </div>
+            </main>
+            
+            <div id="errorNotification" class="hidden fixed bottom-5 right-5 bg-red-500 text-white py-2 px-4 rounded-lg shadow-lg">
+                <p id="errorMessage"></p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- MAPEAMENTO DE ELEMENTOS DO DOM ---
+        const geminiApiKeyInput = document.getElementById('geminiApiKey');
+        const scriptInput = document.getElementById('script');
+        const principalElementInput = document.getElementById('principalElement');
+        const secondaryElementInput = document.getElementById('secondaryElement');
+        const backgroundElementsInput = document.getElementById('backgroundElements');
+        const generatedPromptTextarea = document.getElementById('generatedPrompt');
+        const generatePromptBtn = document.getElementById('generatePromptBtn');
+        const copyPromptBtn = document.getElementById('copyPromptBtn');
+        const promptLoader = document.getElementById('promptLoader');
+        const errorNotification = document.getElementById('errorNotification');
+        const errorMessage = document.getElementById('errorMessage');
+        const uploadBtn = document.getElementById('uploadBtn');
+        const fileInput = document.getElementById('fileInput');
+        const charPositionSelect = document.getElementById('charPosition');
+        const charSizeSlider = document.getElementById('charSize');
+        const charSizeLabel = document.getElementById('charSizeLabel');
+
+        // --- LÓGICA DE SALVAR E CARREGAR CHAVES DE API ---
+        function saveApiKeys() {
+            localStorage.setItem('geradorThumb_geminiApiKey', geminiApiKeyInput.value);
+        }
+        function loadApiKeys() {
+            geminiApiKeyInput.value = localStorage.getItem('geradorThumb_geminiApiKey') || '';
+        }
+        geminiApiKeyInput.addEventListener('input', saveApiKeys);
+        loadApiKeys();
+
+        // --- LÓGICA DE UPLOAD DE ARQUIVO ---
+        uploadBtn.addEventListener('click', () => fileInput.click());
+        fileInput.addEventListener('change', (event) => {
+            const file = event.target.files[0];
+            if (file && file.type === 'text/plain') {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    scriptInput.value = e.target.result;
+                };
+                reader.readAsText(file);
+            } else if (file) {
+                showError("Por favor, selecione um ficheiro .txt");
+            }
+        });
+        
+        // --- LÓGICA DO BOTÃO DE COPIAR ---
+        copyPromptBtn.addEventListener('click', () => {
+            const promptText = generatedPromptTextarea.value;
+            if (promptText) {
+                navigator.clipboard.writeText(promptText).then(() => {
+                    const originalText = copyPromptBtn.textContent;
+                    copyPromptBtn.textContent = 'Copiado!';
+                    setTimeout(() => {
+                        copyPromptBtn.textContent = originalText;
+                    }, 2000);
+                }).catch(err => {
+                    console.error('Erro ao copiar texto: ', err);
+                    showError('Não foi possível copiar o prompt.');
+                });
+            }
+        });
+
+        // --- LÓGICA DOS CONTROLES DE COMPOSIÇÃO ---
+        charSizeSlider.addEventListener('input', () => {
+            charSizeLabel.textContent = charSizeSlider.value;
+        });
+
+        // --- FUNÇÕES DE UTILIDADE ---
+        function showError(message) {
+            errorMessage.textContent = message;
+            errorNotification.classList.remove('hidden');
+            setTimeout(() => {
+                errorNotification.classList.add('hidden');
+            }, 5000);
+        }
+
+        // --- LÓGICA PRINCIPAL ---
+        generatePromptBtn.addEventListener('click', async () => {
+            const script = scriptInput.value.trim();
+            const apiKey = geminiApiKeyInput.value.trim();
+           
+            if (!script) {
+                showError("O campo de Roteiro, Descrição ou Tema é obrigatório.");
+                return;
+            }
+             if (!apiKey) {
+                showError("Por favor, insira a sua chave de API do Gemini.");
+                return;
+            }
+            promptLoader.classList.remove('hidden');
+            generatePromptBtn.disabled = true;
+
+            const payload = {
+                apiKey: apiKey,
+                context: script,
+                principalElement: principalElementInput.value.trim(),
+                secondaryElement: secondaryElementInput.value.trim(),
+                backgroundElements: backgroundElementsInput.value.trim(),
+                position: charPositionSelect.value,
+                size: charSizeSlider.value
+            };
+
+            try {
+                const response = await fetch('/.netlify/functions/generate-prompt', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data.error || 'Ocorreu um erro no servidor.');
+                }
+
+                generatedPromptTextarea.value = data.generatedPrompt.trim();
+
+            } catch (error) {
+                console.error('Erro ao gerar prompt:', error);
+                showError(error.message);
+            } finally {
+                promptLoader.classList.add('hidden');
+                generatePromptBtn.disabled = false;
+            }
+        });
+    </script>
+</body>
+</html>
+

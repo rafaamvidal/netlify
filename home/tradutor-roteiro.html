@@ -1,0 +1,582 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tradutor de Roteiro - RV Tools</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #111827;
+            background-image: radial-gradient(circle at 1px 1px, #374151 1px, transparent 0);
+            background-size: 20px 20px;
+            color: #E5E7EB;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1200px;
+            width: 100%;
+            margin: 0 auto;
+        }
+        .header {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            padding: 30px;
+            text-align: center;
+            position: relative;
+            border-radius: 15px 15px 0 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .header .back-link {
+            position: absolute;
+            top: 50%;
+            left: 30px;
+            transform: translateY(-50%);
+            color: white;
+            text-decoration: none;
+            background: rgba(255,255,255,0.15);
+            padding: 8px 15px;
+            border-radius: 8px;
+            font-weight: 600;
+            transition: background 0.2s ease;
+        }
+        .header .back-link:hover {
+            background: rgba(255,255,255,0.3);
+        }
+        .header h1 {
+            font-size: 2.5rem;
+            margin: 0;
+        }
+        .main-content {
+            padding: 30px;
+            background: rgba(31, 41, 55, 0.5);
+            backdrop-filter: blur(10px);
+            border: 1px solid #4B5563;
+            border-radius: 0 0 15px 15px;
+        }
+        .translator-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 30px;
+        }
+        @media (min-width: 768px) {
+            .translator-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+        .language-selector {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+        .language-selector select {
+            width: 100%;
+            padding: 10px;
+            background-color: #374151;
+            border: 2px solid #4B5563;
+            border-radius: 8px;
+            color: #E5E7EB;
+            font-size: 1rem;
+        }
+        .textarea-container textarea {
+            width: 100%;
+            height: 300px;
+            background-color: #374151;
+            border: 2px solid #4B5563;
+            border-radius: 8px;
+            color: #E5E7EB;
+            padding: 15px;
+            font-size: 1rem;
+            line-height: 1.6;
+            resize: vertical;
+        }
+        .textarea-container textarea:focus {
+            outline: none;
+            border-color: #8B5CF6;
+        }
+        .input-actions, .output-actions {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 15px;
+        }
+        .btn {
+            background: #4B5563;
+            color: #E5E7EB;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: background-color 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        .btn:hover {
+            background: #6B7280;
+        }
+        .btn-primary {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+        }
+        .btn-primary:hover {
+            opacity: 0.9;
+        }
+        .btn:disabled {
+            background: #6B7280;
+            cursor: not-allowed;
+            opacity: 0.5;
+        }
+        .char-counter {
+            font-size: 0.9rem;
+            color: #9CA3AF;
+        }
+        .loader {
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-top-color: #fff;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .api-key-group {
+            margin-top: 20px;
+        }
+        .api-key-group input {
+             width: 100%;
+            padding: 12px;
+            border: 2px solid #4B5563;
+            background-color: #374151;
+            color: #FFF;
+            border-radius: 8px;
+            font-size: 1rem;
+        }
+        .api-key-group label {
+            display: block;
+            text-align: center;
+            font-size: 0.9rem;
+            color: #9CA3AF;
+            margin-top: 8px;
+        }
+        .api-key-group a {
+            color: #A78BFA;
+            text-decoration: none;
+        }
+        .api-key-group a:hover {
+            text-decoration: underline;
+        }
+        .error-message {
+            background-color: rgba(239, 68, 68, 0.1);
+            border: 1px solid #EF4444;
+            color: #F87171;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+            margin-top: 20px;
+        }
+         footer {
+            text-align: center;
+            padding: 40px 20px 20px;
+            color: #9CA3AF;
+            font-size: 0.9rem;
+        }
+        /* --- Início: Estilos do Botão Flutuante e Pop-up de Doação --- */
+		.modal-overlay {
+			position: fixed;
+			top: 0;
+			left: 0;
+			width: 100%;
+			height: 100%;
+			background-color: rgba(17, 24, 39, 0.8);
+			backdrop-filter: blur(5px);
+			z-index: 1000;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			opacity: 0;
+			visibility: hidden;
+			transition: opacity 0.3s ease, visibility 0.3s ease;
+		}
+		.modal-overlay.visible {
+			opacity: 1;
+			visibility: visible;
+		}
+		#donation-modal .modal-content {
+			background-color: #1F2937;
+			border: 1px solid #4B5563;
+			border-radius: 15px;
+			padding: 30px;
+			max-width: 450px;
+			width: 90%;
+			text-align: center;
+			position: relative;
+			transform: scale(0.95);
+			transition: transform 0.3s ease;
+		}
+		.modal-overlay.visible #donation-modal .modal-content {
+			transform: scale(1);
+		}
+		#donation-modal .modal-close {
+			position: absolute;
+			top: 15px;
+			right: 15px;
+			background: none;
+			border: none;
+			color: #9CA3AF;
+			font-size: 1.5rem;
+			cursor: pointer;
+		}
+		#donation-modal .modal-icon {
+			font-size: 3rem;
+			margin-bottom: 15px;
+		}
+		#donation-modal h2 {
+			font-size: 1.8rem;
+			color: #FFF;
+			margin-bottom: 10px;
+		}
+		#donation-modal p {
+			color: #9CA3AF;
+			margin-bottom: 25px;
+		}
+		#donation-modal .btn-kofi {
+			display: block;
+			width: fit-content;
+			margin: 0 auto 20px;
+			padding: 12px 30px;
+			background-color: #FF5E5B;
+			color: white;
+			border-radius: 8px;
+			text-decoration: none;
+			font-weight: 600;
+			font-size: 1.1rem;
+			transition: background-color 0.2s;
+		}
+		#donation-modal .btn-kofi:hover {
+			background-color: #FF413C;
+		}
+		#donation-modal .pix-section {
+			background-color: #374151;
+			border-radius: 8px;
+			padding: 15px;
+		}
+		#donation-modal .pix-section span {
+			display: block;
+			color: #9CA3AF;
+			font-size: 0.9rem;
+			margin-bottom: 10px;
+		}
+		#donation-modal .pix-key-wrapper {
+			display: flex;
+			gap: 10px;
+		}
+		#donation-modal #pix-key {
+			flex-grow: 1;
+			padding: 10px;
+			background-color: #111827;
+			border: 1px solid #4B5563;
+			border-radius: 5px;
+			color: #E5E7EB;
+			text-align: center;
+			overflow: hidden;
+			text-overflow: ellipsis;
+			white-space: nowrap;
+		}
+		#donation-modal #copy-pix-btn {
+			padding: 10px 15px;
+			border: none;
+			background-color: #667eea;
+			color: white;
+			border-radius: 5px;
+			cursor: pointer;
+			font-weight: 500;
+			transition: background-color 0.2s;
+		}
+		#donation-modal #copy-pix-btn:hover {
+			background-color: #5a6fd5;
+		}
+		.floating-donate-btn {
+			position: fixed;
+			bottom: 20px;
+			right: 20px;
+			background: linear-gradient(45deg, #FF5E5B, #EC4899);
+			color: white;
+			border: none;
+			border-radius: 50px;
+			padding: 12px 24px;
+			font-size: 1rem;
+			font-weight: 600;
+			box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+			cursor: pointer;
+			z-index: 999;
+			transition: transform 0.2s ease;
+		}
+		.floating-donate-btn:hover {
+			transform: scale(1.05);
+		}
+		/* --- Fim: Estilos do Botão Flutuante e Pop-up de Doação --- */		
+		
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <a href="index.html" class="back-link">&larr; Voltar ao Painel</a>
+            <h1>🌐 Tradutor de Roteiro (IA)</h1>
+        </div>
+
+        <div class="main-content">
+            <div class="translator-grid">
+                <!-- Coluna de Entrada -->
+                <div class="input-column">
+                    <div class="language-selector">
+                        <select id="from-lang">
+                            <option value="auto">Detectar Idioma</option>
+                            <option value="pt">Português (Brasil)</option>
+                            <option value="en">Inglês</option>
+                            <option value="es">Espanhol</option>
+                            <option value="fr">Francês</option>
+                            <option value="de">Alemão</option>
+                            <option value="it">Italiano</option>
+                        </select>
+                    </div>
+                    <div class="textarea-container">
+                        <textarea id="input-text" placeholder="Cole seu roteiro aqui ou carregue um arquivo..."></textarea>
+                    </div>
+                    <div class="input-actions">
+                        <div>
+                            <button class="btn" id="upload-btn">Carregar .txt</button>
+                            <input type="file" id="file-input" accept=".txt" style="display: none;">
+                        </div>
+                        <span id="input-char-counter" class="char-counter">0 caracteres</span>
+                    </div>
+                </div>
+
+                <!-- Coluna de Saída -->
+                <div class="output-column">
+                    <div class="language-selector">
+                        <select id="to-lang">
+                            <option value="pt">Português (Brasil)</option>
+                            <option value="en">Inglês</option>
+                            <option value="es">Espanhol</option>
+                            <option value="fr">Francês</option>
+                            <option value="de">Alemão</option>
+                            <option value="it">Italiano</option>
+                        </select>
+                    </div>
+                    <div class="textarea-container">
+                        <textarea id="output-text" placeholder="A tradução aparecerá aqui..." readonly></textarea>
+                    </div>
+                    <div class="output-actions">
+                        <button class="btn" id="save-btn" disabled>Salvar .txt</button>
+                    </div>
+                </div>
+            </div>
+            <div class="api-key-group">
+                <input type="password" id="api-key-input" placeholder="Sua Chave de API do Gemini AI">
+                <label for="api-key-input">Sua chave é salva apenas no seu navegador. <a href="https://aistudio.google.com/app/apikey" target="_blank">Obtenha sua chave aqui.</a></label>
+				<label for="api-key-input">Dica: o modelo de IA utilizado é gratuito, portanto é limitado. <br> Coloque seu roteiro por partes, e caso o uso diário da sua API esgote, crie uma nova e substitua a anterior.</label>
+            </div>
+            <div style="text-align: center; margin-top: 30px;">
+                <button id="translate-btn" class="btn btn-primary" style="padding: 12px 40px; font-size: 1.1rem;">
+                    <span id="btn-text">Traduzir</span>
+                    <div id="loader" class="loader" style="display: none;"></div>
+                </button>
+            </div>
+            <div id="error-area"></div>
+        </div>
+
+    <!-- Pop-up de Doação -->
+	<div class="modal-overlay" id="donation-modal">
+		<div class="modal-content">
+			<button class="modal-close" id="close-donation-modal-btn">&times;</button>
+			<div class="modal-icon">❤️</div>
+			<h2>Apoie esta Ferramenta</h2>
+			<p>Se você acha esta ferramenta útil, considere fazer uma doação para ajudar a mantê-la online e em constante desenvolvimento. Qualquer valor ajuda!</p>
+			
+			<a href="https://ko-fi.com/rvtools" target="_blank" class="btn-kofi">Me pague um café no Ko-fi</a>
+
+			<div class="pix-section">
+				<span>Ou faça uma doação via Pix</span>
+				<div class="pix-key-wrapper">
+					<div id="pix-key">00020126930014BR.GOV.BCB.PIX0136d6fd79f9-44ca-44da-9b6e-313fc1c2f11f0231Muito obrigado pela sua doação!5204000053039865802BR5924Rafael Morais Dias Vidal6009SAO PAULO62140510OAw2TlS2ui630428C6</div>
+					<button id="copy-pix-btn">Copiar Chave</button>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<!-- Botão Flutuante de Doação -->
+	<button id="floating-donate-btn" class="floating-donate-btn">
+		❤️ Apoiar
+	</button>        
+		
+        <footer>
+            <p>Criado por: RV Tools</p>
+        </footer>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const inputText = document.getElementById('input-text');
+            const outputText = document.getElementById('output-text');
+            const fromLang = document.getElementById('from-lang');
+            const toLang = document.getElementById('to-lang');
+            const translateBtn = document.getElementById('translate-btn');
+            const uploadBtn = document.getElementById('upload-btn');
+            const fileInput = document.getElementById('file-input');
+            const saveBtn = document.getElementById('save-btn');
+            const inputCharCounter = document.getElementById('input-char-counter');
+            const loader = document.getElementById('loader');
+            const btnText = document.getElementById('btn-text');
+            const errorArea = document.getElementById('error-area');
+            const apiKeyInput = document.getElementById('api-key-input');
+
+            apiKeyInput.value = localStorage.getItem('geminiApiKey') || '';
+            apiKeyInput.addEventListener('input', () => {
+                localStorage.setItem('geminiApiKey', apiKeyInput.value);
+            });
+
+            inputText.addEventListener('input', () => {
+                inputCharCounter.textContent = `${inputText.value.length} caracteres`;
+            });
+
+            uploadBtn.addEventListener('click', () => fileInput.click());
+
+            fileInput.addEventListener('change', (event) => {
+                const file = event.target.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                        inputText.value = e.target.result;
+                        inputCharCounter.textContent = `${inputText.value.length} caracteres`;
+                    };
+                    reader.readAsText(file);
+                }
+            });
+
+            translateBtn.addEventListener('click', async () => {
+                const text = inputText.value.trim();
+                const apiKey = apiKeyInput.value.trim();
+
+                if (!text) {
+                    // Replaced alert with a more modern approach
+                    errorArea.innerHTML = `<div class="error-message">Por favor, insira um texto para traduzir.</div>`;
+                    return;
+                }
+                if (!apiKey) {
+                    errorArea.innerHTML = `<div class="error-message">Por favor, insira sua chave de API do Gemini.</div>`;
+                    return;
+                }
+
+                loader.style.display = 'block';
+                btnText.textContent = 'Traduzindo...';
+                translateBtn.disabled = true;
+                outputText.value = '';
+                saveBtn.disabled = true;
+                errorArea.innerHTML = '';
+
+                try {
+                    // ---- MUDANÇA PRINCIPAL AQUI ----
+                    // Trocado de GET para POST para suportar textos longos e ser mais seguro.
+                    const response = await fetch('/.netlify/functions/translate', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            text: text,
+                            sourceLang: fromLang.value,
+                            targetLang: toLang.value,
+                            apiKey: apiKey
+                        }),
+                    });
+                    
+                    const data = await response.json();
+
+                    if (!response.ok) {
+                        throw new Error(data.error || 'Ocorreu um erro desconhecido no servidor.');
+                    }
+                    
+                    outputText.value = data.translatedText;
+                    saveBtn.disabled = false;
+
+                } catch (error) {
+                    console.error('Erro:', error);
+                    errorArea.innerHTML = `<div class="error-message">${error.message}</div>`;
+                } finally {
+                    loader.style.display = 'none';
+                    btnText.textContent = 'Traduzir';
+                    translateBtn.disabled = false;
+                }
+            });
+
+            saveBtn.addEventListener('click', () => {
+                const textToSave = outputText.value;
+                if (!textToSave) return;
+                const blob = new Blob([textToSave], { type: 'text/plain;charset=utf-8' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `roteiro_traduzido_${toLang.value}.txt`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+            });
+
+			// --- Início: Lógica do Pop-up de Doação ---
+			const donationModal = document.getElementById('donation-modal');
+			const closeDonationModalBtn = document.getElementById('close-donation-modal-btn');
+			const copyPixBtn = document.getElementById('copy-pix-btn');
+			const pixKey = document.getElementById('pix-key');
+			const floatingDonateBtn = document.getElementById('floating-donate-btn');
+
+			const openDonationModal = () => {
+				if (donationModal) donationModal.classList.add('visible');
+			};
+
+			const closeDonationModal = () => {
+				if (donationModal) donationModal.classList.remove('visible');
+			};
+
+			if (floatingDonateBtn) floatingDonateBtn.addEventListener('click', openDonationModal);
+			if (closeDonationModalBtn) closeDonationModalBtn.addEventListener('click', closeDonationModal);
+			if (donationModal) {
+				donationModal.addEventListener('click', (e) => {
+					if (e.target === donationModal) closeDonationModal();
+				});
+			}
+
+			if (copyPixBtn && pixKey) {
+				copyPixBtn.addEventListener('click', () => {
+					navigator.clipboard.writeText(pixKey.textContent).then(() => {
+						const originalText = copyPixBtn.textContent;
+						copyPixBtn.textContent = 'Copiado!';
+						copyPixBtn.style.backgroundColor = '#10B981';
+						setTimeout(() => {
+							copyPixBtn.textContent = originalText;
+							copyPixBtn.style.backgroundColor = '#667eea';
+						}, 2000);
+					}).catch(err => {
+						alert('Falha ao copiar a chave Pix.');
+					});
+				});
+			}
+			// --- Fim: Lógica do Pop-up de Doação ---			
+			
+        });
+    </script>
+</body>
+</html>

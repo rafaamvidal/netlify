@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gerador de Post para Comunidade (IA) - Creators Tools</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #111827;
+        }
+        .glassmorphism {
+            background: rgba(31, 41, 55, 0.5);
+            backdrop-filter: blur(10px);
+            border: 1px solid #4B5563;
+        }
+        .form-input, .form-select {
+            background-color: #374151;
+            border: 1px solid #4B5563;
+            color: #F3F4F6;
+            border-radius: 0.5rem;
+        }
+        .form-input:focus, .form-select:focus {
+            outline: none;
+            border-color: #8B5CF6;
+            box-shadow: 0 0 0 2px rgba(139, 92, 246, 0.4);
+        }
+        .btn-primary {
+            background-color: #8B5CF6;
+            color: white;
+        }
+        .btn-primary:hover {
+            background-color: #7C3AED;
+        }
+        .btn-primary:disabled {
+            background-color: #4B5563;
+            cursor: not-allowed;
+            opacity: 0.7;
+        }
+        .loader {
+            border-bottom-color: transparent !important;
+        }
+    </style>
+</head>
+<body class="text-gray-200">
+
+    <div class="min-h-screen w-full p-4 sm:p-6 lg:p-8">
+        <div class="max-w-4xl mx-auto">
+            
+            <header class="relative text-center mb-8 p-8 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600">
+                <a href="index.html" class="absolute top-4 left-4 rounded-md bg-white/20 hover:bg-white/30 text-sm py-2 px-3 transition">&larr; Voltar ao Painel</a>
+                <h1 class="text-4xl sm:text-5xl font-bold text-white">✍️ Gerador de Post para Comunidade</h1>
+                <p class="mt-2 text-lg text-indigo-200">Crie textos persuasivos para a aba Comunidade do seu canal.</p>
+            </header>
+
+            <main class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <!-- Coluna de Entrada -->
+                <div class="flex flex-col gap-6">
+                    <div class="glassmorphism p-6 rounded-xl">
+                        <h2 class="text-xl font-bold mb-4">1. Forneça o Contexto</h2>
+                        <div class="space-y-4">
+                            <div>
+                                <label for="video-context" class="block text-sm font-medium text-gray-300 mb-2">Resumo ou Roteiro do Vídeo</label>
+                                <textarea id="video-context" class="form-input w-full h-40 p-3 text-sm" placeholder="Cole aqui o seu roteiro ou um resumo sobre o que é o vídeo..."></textarea>
+                            </div>
+                            <div>
+                                <label for="post-status" class="block text-sm font-medium text-gray-300 mb-2">Status da Postagem</label>
+                                <select id="post-status" class="form-select w-full p-3 text-sm">
+                                    <option value="sneak_peek" selected>Prévia (O vídeo ainda não saiu)</option>
+                                    <option value="already_posted">Já Postado (O vídeo está no ar)</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label for="output-language" class="block text-sm font-medium text-gray-300 mb-2">Idioma de Saída</label>
+                                <select id="output-language" class="form-select w-full p-3 text-sm">
+                                    <option value="Português (Brasil)" selected>Português (Brasil)</option>
+                                    <option value="English">English</option>
+                                    <option value="Español">Español</option>
+                                </select>
+                            </div>
+                             <div>
+                                <label for="geminiApiKey" class="block text-sm font-medium text-gray-300 mb-2">Sua Chave de API (Gemini)</label>
+                                <input type="password" id="geminiApiKey" class="form-input w-full p-3" placeholder="Cole sua chave do Google AI Studio">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mt-2">
+                        <button id="generateBtn" class="btn-primary w-full py-3 px-6 rounded-lg font-semibold flex items-center justify-center text-lg">
+                            <span id="btnText">Gerar Postagem</span>
+                            <div id="loader" class="loader w-5 h-5 ml-3 border-2 rounded-full animate-spin hidden"></div>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Coluna de Saída -->
+                <div class="flex flex-col gap-6">
+                    <div class="glassmorphism p-6 rounded-xl h-full flex flex-col">
+                        <div class="flex justify-between items-center mb-4">
+                            <h2 class="text-xl font-bold">2. Resultado Gerado</h2>
+                            <button id="copyBtn" class="text-sm bg-gray-700 hover:bg-gray-600 rounded-md py-1 px-3">Copiar</button>
+                        </div>
+                        <textarea id="generated-post" readonly class="form-input w-full flex-grow p-3 text-sm bg-gray-800" placeholder="O texto para a sua postagem aparecerá aqui..."></textarea>
+                    </div>
+                     <div id="error-container" class="bg-red-900/50 border border-red-500 text-red-300 p-4 rounded-lg hidden">
+                        <p id="errorMessage"></p>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const videoContextInput = document.getElementById('video-context');
+        const postStatusSelect = document.getElementById('post-status');
+        const outputLanguageSelect = document.getElementById('output-language');
+        const geminiApiKeyInput = document.getElementById('geminiApiKey');
+        const generateBtn = document.getElementById('generateBtn');
+        const btnText = document.getElementById('btnText');
+        const loader = document.getElementById('loader');
+        const generatedPostTextarea = document.getElementById('generated-post');
+        const copyBtn = document.getElementById('copyBtn');
+        const errorContainer = document.getElementById('error-container');
+        const errorMessageP = document.getElementById('errorMessage');
+        
+        geminiApiKeyInput.addEventListener('input', () => localStorage.setItem('geminiApiKey_community', geminiApiKeyInput.value));
+        geminiApiKeyInput.value = localStorage.getItem('geminiApiKey_community') || '';
+
+        generateBtn.addEventListener('click', async () => {
+            const context = videoContextInput.value.trim();
+            const postStatus = postStatusSelect.value;
+            const language = outputLanguageSelect.value;
+            const apiKey = geminiApiKeyInput.value.trim();
+
+            if (!context || !apiKey) {
+                showError('Por favor, preencha o resumo/roteiro e a sua chave de API.');
+                return;
+            }
+
+            setLoading(true);
+            hideError();
+            generatedPostTextarea.value = '';
+
+            try {
+                const response = await fetch('/.netlify/functions/generate-community-post', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ apiKey, context, postStatus, language })
+                });
+
+                const data = await response.json();
+                if (!response.ok) throw new Error(data.error);
+                
+                generatedPostTextarea.value = data.post;
+
+            } catch (error) {
+                console.error("Erro na geração:", error);
+                showError(error.message);
+            } finally {
+                setLoading(false);
+            }
+        });
+        
+        copyBtn.addEventListener('click', () => {
+            const textToCopy = generatedPostTextarea.value;
+            if (textToCopy) {
+                navigator.clipboard.writeText(textToCopy).then(() => {
+                    const originalText = copyBtn.textContent;
+                    copyBtn.textContent = 'Copiado!';
+                    setTimeout(() => { copyBtn.textContent = originalText; }, 2000);
+                }).catch(err => showError('Falha ao copiar.'));
+            }
+        });
+
+        function setLoading(isLoading) {
+            generateBtn.disabled = isLoading;
+            btnText.textContent = isLoading ? 'A gerar...' : 'Gerar Postagem';
+            loader.classList.toggle('hidden', !isLoading);
+        }
+
+        function showError(message) {
+            errorMessageP.textContent = message;
+            errorContainer.classList.remove('hidden');
+        }
+        function hideError() {
+            errorContainer.classList.add('hidden');
+        }
+    });
+    </script>
+</body>
+</html>

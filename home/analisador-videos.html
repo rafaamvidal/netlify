@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Analisador de Vídeo Completo (IA) - Creators Tools</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #111827;
+        }
+        .glassmorphism {
+            background: rgba(31, 41, 55, 0.5);
+            backdrop-filter: blur(10px);
+            border: 1px solid #4B5563;
+        }
+        .form-input {
+            background-color: #374151;
+            border: 1px solid #4B5563;
+            color: #F3F4F6;
+            border-radius: 0.5rem;
+        }
+        .form-input:focus {
+            outline: none;
+            border-color: #8B5CF6;
+            box-shadow: 0 0 0 2px rgba(139, 92, 246, 0.4);
+        }
+        .btn-primary {
+            background-color: #8B5CF6;
+            color: white;
+        }
+        .btn-primary:hover {
+            background-color: #7C3AED;
+        }
+        .btn-primary:disabled {
+            background-color: #4B5563;
+            cursor: not-allowed;
+            opacity: 0.7;
+        }
+        .loader {
+            border-bottom-color: transparent !important;
+        }
+        #analysis-result h2 {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: #A5B4FC; /* Cor de destaque */
+            margin-top: 1.5rem;
+            margin-bottom: 0.75rem;
+            border-bottom: 1px solid #4B5563;
+            padding-bottom: 0.5rem;
+        }
+        #analysis-result h3 {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-top: 1.25rem;
+            margin-bottom: 0.5rem;
+            color: #C7D2FE;
+        }
+        #analysis-result ul {
+            list-style-position: inside;
+            list-style-type: disc;
+            padding-left: 1rem;
+        }
+        #analysis-result li {
+            margin-bottom: 0.5rem;
+        }
+        #analysis-result strong {
+            color: #A5B4FC;
+        }
+        #analysis-result p {
+            margin-bottom: 1rem;
+        }
+    </style>
+</head>
+<body class="text-gray-200">
+
+    <div class="min-h-screen w-full p-4 sm:p-6 lg:p-8">
+        <div class="max-w-4xl mx-auto">
+            
+            <header class="relative text-center mb-8 p-8 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600">
+                <a href="index.html" class="absolute top-4 left-4 rounded-md bg-white/20 hover:bg-white/30 text-sm py-2 px-3 transition">&larr; Voltar ao Painel</a>
+                <h1 class="text-4xl sm:text-5xl font-bold text-white">📊 Analisador de <br> Vídeo Completo</h1>
+                <p class="mt-2 text-lg text-indigo-200">Analise comentários, título e descrição para extrair insights valiosos com IA.</p>
+            </header>
+
+            <main class="space-y-8">
+                <div class="glassmorphism p-6 rounded-xl">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label for="videoUrl" class="block text-sm font-medium text-gray-300 mb-2">URL do Vídeo do YouTube</label>
+                            <input type="url" id="videoUrl" class="form-input w-full p-3" placeholder="https://www.youtube.com/watch?v=...">
+                        </div>
+                        <div>
+                            <label for="youtubeApiKey" class="block text-sm font-medium text-gray-300 mb-2">Sua Chave de API (YouTube Data)</label>
+                            <input type="password" id="youtubeApiKey" class="form-input w-full p-3" placeholder="Cole sua chave da API de Dados do YouTube">
+                        </div>
+                         <div>
+                            <label for="geminiApiKey" class="block text-sm font-medium text-gray-300 mb-2">Sua Chave de API (Gemini)</label>
+                            <input type="password" id="geminiApiKey" class="form-input w-full p-3" placeholder="Cole sua chave do Google AI Studio">
+                        </div>
+                    </div>
+                    <div class="mt-6">
+                        <button id="analyzeBtn" class="btn-primary w-full py-3 px-6 rounded-lg font-semibold flex items-center justify-center">
+                            <span id="btnText">Analisar Vídeo</span>
+                            <div id="loader" class="loader w-5 h-5 ml-3 border-2 rounded-full animate-spin hidden"></div>
+                        </button>
+                    </div>
+                </div>
+
+                <div id="result-container" class="glassmorphism p-6 rounded-xl hidden">
+                    <div id="analysis-result" class="prose prose-invert max-w-none text-gray-300">
+                        <!-- O resultado da análise será inserido aqui -->
+                    </div>
+                </div>
+
+                 <div id="error-container" class="bg-red-900/50 border border-red-500 text-red-300 p-4 rounded-lg hidden">
+                    <p id="errorMessage"></p>
+                </div>
+
+            </main>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const videoUrlInput = document.getElementById('videoUrl');
+            const youtubeApiKeyInput = document.getElementById('youtubeApiKey');
+            const geminiApiKeyInput = document.getElementById('geminiApiKey');
+            const analyzeBtn = document.getElementById('analyzeBtn');
+            const btnText = document.getElementById('btnText');
+            const loader = document.getElementById('loader');
+            const resultContainer = document.getElementById('result-container');
+            const analysisResultDiv = document.getElementById('analysis-result');
+            const errorContainer = document.getElementById('error-container');
+            const errorMessageP = document.getElementById('errorMessage');
+
+            // Salvar e carregar chaves
+            youtubeApiKeyInput.addEventListener('input', () => localStorage.setItem('youtubeApiKey', youtubeApiKeyInput.value));
+            geminiApiKeyInput.addEventListener('input', () => localStorage.setItem('geminiApiKey_comments', geminiApiKeyInput.value));
+            youtubeApiKeyInput.value = localStorage.getItem('youtubeApiKey') || '';
+            geminiApiKeyInput.value = localStorage.getItem('geminiApiKey_comments') || '';
+
+
+            analyzeBtn.addEventListener('click', async () => {
+                const videoUrl = videoUrlInput.value.trim();
+                const youtubeApiKey = youtubeApiKeyInput.value.trim();
+                const geminiApiKey = geminiApiKeyInput.value.trim();
+
+                if (!videoUrl || !youtubeApiKey || !geminiApiKey) {
+                    showError('Por favor, preencha todos os campos.');
+                    return;
+                }
+
+                setLoading(true);
+                hideError();
+                resultContainer.classList.add('hidden');
+
+                try {
+                    const response = await fetch('/.netlify/functions/analyze-comments', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ videoUrl, youtubeApiKey, geminiApiKey })
+                    });
+                    
+                    const data = await response.json();
+
+                    if (!response.ok) {
+                        throw new Error(data.error || 'Ocorreu um erro desconhecido.');
+                    }
+                    
+                    // Para uma renderização de Markdown mais robusta, uma biblioteca como 'marked.js' seria ideal.
+                    // Para este exemplo, faremos substituições simples.
+                    let htmlResult = data.analysis
+                        .replace(/## (.*)/g, '<h2>$1</h2>')
+                        .replace(/### (.*)/g, '<h3>$1</h3>')
+                        .replace(/\* \*\*(.*?)\*\*:/g, (match, p1) => `<li><strong>${p1}:</strong>`)
+                        .replace(/\* (.*)/g, '<li>$1</li>')
+                        .replace(/(\n)/g, '<br>') // Substituir quebras de linha por <br>
+                        .replace(/<br><li>/g, '<li>') // Corrigir quebras de linha antes de <li>
+                        .replace(/<\/strong><br>/g, '</strong> '); // Corrigir quebra de linha após <strong>
+                        
+                    // Agrupar <li> dentro de <ul>
+                    htmlResult = htmlResult.replace(/<li>(.*?)<\/li>/gs, (match, p1) => `<ul>${match}</ul>`);
+                    // Remover <ul> aninhados
+                    htmlResult = htmlResult.replace(/<\/ul><ul>/g, '');
+
+
+                    analysisResultDiv.innerHTML = htmlResult;
+                    resultContainer.classList.remove('hidden');
+
+                } catch (error) {
+                    console.error('Erro na análise:', error);
+                    showError(error.message);
+                } finally {
+                    setLoading(false);
+                }
+            });
+
+            function setLoading(isLoading) {
+                if (isLoading) {
+                    analyzeBtn.disabled = true;
+                    btnText.textContent = 'A analisar...';
+                    loader.classList.remove('hidden');
+                } else {
+                    analyzeBtn.disabled = false;
+                    btnText.textContent = 'Analisar Vídeo';
+                    loader.classList.add('hidden');
+                }
+            }
+
+            function showError(message) {
+                errorMessageP.textContent = message;
+                errorContainer.classList.remove('hidden');
+            }
+             function hideError() {
+                errorContainer.classList.add('hidden');
+            }
+        });
+    </script>
+
+</body>
+</html>
+

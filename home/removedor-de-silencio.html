@@ -1,0 +1,704 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Removedor de Silêncio de Áudio</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/lamejs@1.2.1/lame.min.js"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #111827;
+            background-image: radial-gradient(circle at 1px 1px, #374151 1px, transparent 0);
+            background-size: 20px 20px;
+            color: #E5E7EB;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 800px;
+            width: 100%;
+            margin: 0 auto;
+        }
+        .header {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            padding: 30px;
+            text-align: center;
+            position: relative;
+            border-radius: 15px 15px 0 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .header .back-link {
+            position: absolute;
+            top: 50%;
+            left: 30px;
+            transform: translateY(-50%);
+            color: white;
+            text-decoration: none;
+            background: rgba(255,255,255,0.15);
+            padding: 8px 15px;
+            border-radius: 8px;
+            font-weight: 600;
+            transition: background 0.2s ease;
+        }
+        .header .back-link:hover {
+            background: rgba(255,255,255,0.3);
+        }
+        .header h1 {
+            font-size: 2.5rem;
+            margin: 0;
+            line-height: 1.2;
+        }
+        .main-content {
+            padding: 30px;
+            background: rgba(31, 41, 55, 0.5);
+            backdrop-filter: blur(10px);
+            border: 1px solid #4B5563;
+            border-radius: 0 0 15px 15px;
+        }
+        .text-center { text-align: center; }
+        .mb-8 { margin-bottom: 2rem; }
+        .mb-6 { margin-bottom: 1.5rem; }
+        .mt-2 { margin-top: 0.5rem; }
+        .mt-4 { margin-top: 1rem; }
+        .font-bold { font-weight: 700; }
+        .text-gray-900 { color: #FFF; }
+        .text-gray-600 { color: #9CA3AF; }
+        .hidden { display: none; }
+        .space-y-6 > :not([hidden]) ~ :not([hidden]) { margin-top: 1.5rem; }
+        .text-xl { font-size: 1.25rem; }
+        .font-semibold { font-weight: 600; }
+        .border-b { border-bottom-width: 1px; }
+        .pb-2 { padding-bottom: 0.5rem; }
+        .border-gray-200 { border-color: #4B5563; }
+        .block { display: block; }
+        .text-sm { font-size: 0.875rem; }
+        .font-medium { font-weight: 500; }
+        .text-gray-700 { color: #D1D5DB; }
+        .w-full { width: 100%; }
+        .text-xs { font-size: 0.75rem; }
+        .text-gray-500 { color: #6B7280; }
+        .h-10 { height: 2.5rem; }
+        .flex { display: flex; }
+        .items-center { align-items: center; }
+        .justify-center { justify-content: center; }
+        .ml-4 { margin-left: 1rem; }
+        
+        .custom-file-label {
+            display: inline-block;
+            background: #4f46e5;
+            color: white;
+            border-radius: 0.375rem;
+            padding: 0.75rem 1.5rem;
+            cursor: pointer;
+            font-weight: 600;
+            transition: background-color 0.2s;
+        }
+        .custom-file-label:hover {
+            background: #4338ca;
+        }
+        
+        input[type="range"] {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 100%;
+            height: 8px;
+            background: #374151;
+            border-radius: 5px;
+            outline: none;
+        }
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            background: #4f46e5;
+            border-radius: 50%;
+            cursor: pointer;
+        }
+        input[type="range"]::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            background: #4f46e5;
+            border-radius: 50%;
+            cursor: pointer;
+        }
+
+        #process-btn {
+            background-color: #4f46e5;
+            color: white;
+            font-weight: 700;
+            padding: 0.75rem 2rem;
+            border-radius: 0.5rem;
+            transition: background-color 0.3s;
+            border: none;
+        }
+        #process-btn:hover {
+            background-color: #4338ca;
+        }
+        #process-btn:disabled {
+            background-color: #6B7280;
+            cursor: not-allowed;
+        }
+        
+        #download-link {
+            display: inline-block;
+            background-color: #059669;
+            color: white;
+            font-weight: 700;
+            padding: 0.75rem 2rem;
+            border-radius: 0.5rem;
+            text-decoration: none;
+            transition: background-color 0.3s;
+        }
+        #download-link:hover {
+            background-color: #047857;
+        }
+
+        .loader {
+            border: 4px solid #374151;
+            border-top: 4px solid #4f46e5;
+            border-radius: 50%;
+            width: 32px;
+            height: 32px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+         footer {
+            text-align: center;
+            padding: 40px 20px 20px;
+            color: #9CA3AF;
+            font-size: 0.9rem;
+        }
+
+        @media (max-width: 600px) {
+            .header h1 {
+                font-size: 1.8rem;
+            }
+            .header .back-link {
+                left: 15px;
+            }
+        }
+		
+        /* --- Início: Estilos do Botão Flutuante e Pop-up de Doação --- */
+		.modal-overlay {
+			position: fixed;
+			top: 0;
+			left: 0;
+			width: 100%;
+			height: 100%;
+			background-color: rgba(17, 24, 39, 0.8);
+			backdrop-filter: blur(5px);
+			z-index: 1000;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			opacity: 0;
+			visibility: hidden;
+			transition: opacity 0.3s ease, visibility 0.3s ease;
+		}
+		.modal-overlay.visible {
+			opacity: 1;
+			visibility: visible;
+		}
+		#donation-modal .modal-content {
+			background-color: #1F2937;
+			border: 1px solid #4B5563;
+			border-radius: 15px;
+			padding: 30px;
+			max-width: 450px;
+			width: 90%;
+			text-align: center;
+			position: relative;
+			transform: scale(0.95);
+			transition: transform 0.3s ease;
+		}
+		.modal-overlay.visible #donation-modal .modal-content {
+			transform: scale(1);
+		}
+		#donation-modal .modal-close {
+			position: absolute;
+			top: 15px;
+			right: 15px;
+			background: none;
+			border: none;
+			color: #9CA3AF;
+			font-size: 1.5rem;
+			cursor: pointer;
+		}
+		#donation-modal .modal-icon {
+			font-size: 3rem;
+			margin-bottom: 15px;
+		}
+		#donation-modal h2 {
+			font-size: 1.8rem;
+			color: #FFF;
+			margin-bottom: 10px;
+		}
+		#donation-modal p {
+			color: #9CA3AF;
+			margin-bottom: 25px;
+		}
+		#donation-modal .btn-kofi {
+			display: block;
+			width: fit-content;
+			margin: 0 auto 20px;
+			padding: 12px 30px;
+			background-color: #FF5E5B;
+			color: white;
+			border-radius: 8px;
+			text-decoration: none;
+			font-weight: 600;
+			font-size: 1.1rem;
+			transition: background-color 0.2s;
+		}
+		#donation-modal .btn-kofi:hover {
+			background-color: #FF413C;
+		}
+		#donation-modal .pix-section {
+			background-color: #374151;
+			border-radius: 8px;
+			padding: 15px;
+		}
+		#donation-modal .pix-section span {
+			display: block;
+			color: #9CA3AF;
+			font-size: 0.9rem;
+			margin-bottom: 10px;
+		}
+		#donation-modal .pix-key-wrapper {
+			display: flex;
+			gap: 10px;
+		}
+		#donation-modal #pix-key {
+			flex-grow: 1;
+			padding: 10px;
+			background-color: #111827;
+			border: 1px solid #4B5563;
+			border-radius: 5px;
+			color: #E5E7EB;
+			text-align: center;
+			overflow: hidden;
+			text-overflow: ellipsis;
+			white-space: nowrap;
+		}
+		#donation-modal #copy-pix-btn {
+			padding: 10px 15px;
+			border: none;
+			background-color: #667eea;
+			color: white;
+			border-radius: 5px;
+			cursor: pointer;
+			font-weight: 500;
+			transition: background-color 0.2s;
+		}
+		#donation-modal #copy-pix-btn:hover {
+			background-color: #5a6fd5;
+		}
+		.floating-donate-btn {
+			position: fixed;
+			bottom: 20px;
+			right: 20px;
+			background: linear-gradient(45deg, #FF5E5B, #EC4899);
+			color: white;
+			border: none;
+			border-radius: 50px;
+			padding: 12px 24px;
+			font-size: 1rem;
+			font-weight: 600;
+			box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+			cursor: pointer;
+			z-index: 999;
+			transition: transform 0.2s ease;
+		}
+		.floating-donate-btn:hover {
+			transform: scale(1.05);
+		}
+		/* --- Fim: Estilos do Botão Flutuante e Pop-up de Doação --- */
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <div class="header">
+            <a href="index.html" class="back-link">&larr; Voltar ao Painel</a>
+            <h1>🔇 Removedor <br> de Silêncio</h1>
+        </div>
+
+        <div class="main-content">
+            <div class="text-center mb-8">
+                <p class="text-gray-600 mt-2">Faça o upload do seu áudio, remova as partes silenciosas e baixe o resultado em MP3.</p>
+            </div>
+
+            <div id="upload-area" class="text-center mb-6">
+                <label for="audio-file" class="custom-file-label">Selecione o arquivo de áudio</label>
+                <input type="file" id="audio-file" class="hidden" accept="audio/*">
+                <p id="file-name" class="mt-4 text-sm text-gray-500">Nenhum arquivo selecionado.</p>
+            </div>
+
+            <div id="settings-area" class="space-y-6 mb-8 hidden">
+                <h2 class="text-xl font-semibold text-center text-gray-900 border-b pb-2">Configurações</h2>
+                
+                <div>
+                    <label for="threshold" class="block text-sm font-medium text-gray-700">Nível de Silêncio (dB)</label>
+                    <input type="range" id="threshold" min="-90" max="0" value="-40">
+                    <div class="text-center text-gray-600 mt-1"><span id="threshold-value">-40</span> dB</div>
+                    <p class="text-xs text-gray-500 mt-1">Qualquer som abaixo deste nível será considerado silêncio.</p>
+                </div>
+                
+                <div>
+                    <label for="keep-silence-duration" class="block text-sm font-medium text-gray-700">Manter Silêncio Menor Que (ms)</label>
+                    <input type="range" id="keep-silence-duration" min="0" max="1000" value="250" step="10">
+                    <div class="text-center text-gray-600 mt-1"><span id="keep-silence-duration-value">250</span> ms</div>
+                    <p class="text-xs text-gray-500 mt-1">Pausas mais curtas que este valor serão mantidas. Pausas mais longas serão removidas.</p>
+                </div>
+
+                <div>
+                    <label for="padding" class="block text-sm font-medium text-gray-700">Preenchimento no Final (ms)</label>
+                    <input type="range" id="padding" min="0" max="500" value="50" step="10">
+                    <div class="text-center text-gray-600 mt-1"><span id="padding-value">50</span> ms</div>
+                    <p class="text-xs text-gray-500 mt-1">Adiciona um pequeno silêncio após cada trecho de fala para evitar cortes bruscos.</p>
+                </div>
+            </div>
+            
+            <div class="text-center">
+                <button id="process-btn" disabled>
+                    Processar Áudio
+                </button>
+                <div id="status" class="mt-4 text-gray-600 h-10 flex items-center justify-center"></div>
+            </div>
+
+            <div id="download-area" class="mt-8 text-center hidden">
+                 <h2 class="text-xl font-semibold text-center text-gray-900 border-b pb-2 mb-4">Seu áudio está pronto!</h2>
+                 <audio id="preview-player" controls class="w-full mb-4"></audio>
+                 <a id="download-link">
+                    Baixar Áudio Processado (MP3)
+                </a>
+            </div>
+        </div>
+        
+        <footer>
+            <p>Criado por: RV Tools</p>
+        </footer>
+    </div>
+    
+    <!-- Pop-up de Doação -->
+	<div class="modal-overlay" id="donation-modal">
+		<div class="modal-content">
+			<button class="modal-close" id="close-donation-modal-btn">&times;</button>
+			<div class="modal-icon">❤️</div>
+			<h2>Apoie esta Ferramenta</h2>
+			<p>Se você acha esta ferramenta útil, considere fazer uma doação para ajudar a mantê-la online e em constante desenvolvimento. Qualquer valor ajuda!</p>
+			
+			<a href="https://ko-fi.com/rvtools" target="_blank" class="btn-kofi">Me pague um café no Ko-fi</a>
+
+			<div class="pix-section">
+				<span>Ou faça uma doação via Pix</span>
+				<div class="pix-key-wrapper">
+					<div id="pix-key">00020126930014BR.GOV.BCB.PIX0136d6fd79f9-44ca-44da-9b6e-313fc1c2f11f0231Muito obrigado pela sua doação!5204000053039865802BR5924Rafael Morais Dias Vidal6009SAO PAULO62140510OAw2TlS2ui630428C6</div>
+					<button id="copy-pix-btn">Copiar Chave</button>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<!-- Botão Flutuante de Doação -->
+	<button id="floating-donate-btn" class="floating-donate-btn">
+		❤️ Apoiar
+	</button>
+
+    <script>
+        // Função de inicialização principal da página
+        function initSilenceRemover() {
+            const fileInput = document.getElementById('audio-file');
+            const fileNameDisplay = document.getElementById('file-name');
+            const settingsArea = document.getElementById('settings-area');
+            const processBtn = document.getElementById('process-btn');
+            const statusDisplay = document.getElementById('status');
+            const downloadArea = document.getElementById('download-area');
+            const downloadLink = document.getElementById('download-link');
+            const previewPlayer = document.getElementById('preview-player');
+
+            const thresholdInput = document.getElementById('threshold');
+            const thresholdValue = document.getElementById('threshold-value');
+            const keepSilenceInput = document.getElementById('keep-silence-duration');
+            const keepSilenceValue = document.getElementById('keep-silence-duration-value');
+            const paddingInput = document.getElementById('padding');
+            const paddingValue = document.getElementById('padding-value');
+
+            let audioBuffer = null;
+            let originalFileName = '';
+
+            const AudioContext = window.AudioContext || window.webkitAudioContext;
+            const audioContext = new AudioContext();
+
+            thresholdInput.addEventListener('input', () => thresholdValue.textContent = thresholdInput.value);
+            keepSilenceInput.addEventListener('input', () => keepSilenceValue.textContent = keepSilenceInput.value);
+            paddingInput.addEventListener('input', () => paddingValue.textContent = paddingInput.value);
+
+            fileInput.addEventListener('change', async (event) => {
+                const file = event.target.files[0];
+                if (!file) return;
+
+                originalFileName = file.name.replace(/\.[^/.]+$/, "");
+                fileNameDisplay.textContent = file.name;
+                processBtn.disabled = true;
+                downloadArea.classList.add('hidden');
+                statusDisplay.innerHTML = '<div class="loader"></div>';
+
+                try {
+                    const arrayBuffer = await file.arrayBuffer();
+                    audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
+                    statusDisplay.textContent = 'Arquivo carregado. Ajuste as configurações e processe.';
+                    processBtn.disabled = false;
+                    settingsArea.classList.remove('hidden');
+                } catch (error) {
+                    console.error('Erro ao decodificar o arquivo de áudio:', error);
+                    statusDisplay.textContent = 'Erro: Não foi possível ler o arquivo. Tente outro formato.';
+                    fileNameDisplay.textContent = 'Nenhum arquivo selecionado.';
+                    processBtn.disabled = true;
+                    settingsArea.classList.add('hidden');
+                }
+            });
+
+            processBtn.addEventListener('click', async () => {
+                if (!audioBuffer) return;
+
+                processBtn.disabled = true;
+                statusDisplay.innerHTML = '<div class="loader"></div><p class="ml-4">Processando...</p>';
+                downloadArea.classList.add('hidden');
+
+                setTimeout(async () => {
+                    try {
+                        const soundChunks = getSoundChunks(audioBuffer);
+                        
+                        const maxSilenceToKeep = parseFloat(keepSilenceInput.value) / 1000;
+                        const finalChunks = mergeAdjacentChunks(soundChunks, maxSilenceToKeep);
+
+                        if (finalChunks.length === 0) {
+                            statusDisplay.textContent = "Nenhum trecho com som foi detectado.";
+                            processBtn.disabled = false;
+                            return;
+                        }
+                        
+                        const processedBuffer = createProcessedBuffer(audioBuffer, finalChunks);
+                        if (!processedBuffer) {
+                            statusDisplay.textContent = "O áudio resultante estaria vazio. Tente outras configurações.";
+                            processBtn.disabled = false;
+                            return;
+                        }
+
+                        const mp3Blob = await encodeToMp3(processedBuffer);
+                        
+                        const url = URL.createObjectURL(mp3Blob);
+                        downloadLink.href = url;
+                        downloadLink.download = `${originalFileName}_processado.mp3`;
+                        previewPlayer.src = url;
+
+                        downloadArea.classList.remove('hidden');
+                        statusDisplay.textContent = 'Processamento concluído!';
+                        processBtn.disabled = false;
+
+                    } catch (error) {
+                        console.error("Erro durante o processamento:", error);
+                        statusDisplay.textContent = 'Ocorreu um erro durante o processamento.';
+                        processBtn.disabled = false;
+                    }
+                }, 100);
+            });
+
+            function getSoundChunks(buffer) {
+                statusDisplay.innerHTML = '<div class="loader"></div><p class="ml-4">Analisando áudio...</p>';
+                const threshold = parseFloat(thresholdInput.value);
+                const sampleRate = buffer.sampleRate;
+                const channelData = buffer.getChannelData(0);
+                const chunkSize = 256;
+                const soundChunks = [];
+                let isCurrentlySound = false;
+                let soundStartSample = 0;
+                for (let i = 0; i < channelData.length; i += chunkSize) {
+                    const chunkEnd = Math.min(i + chunkSize, channelData.length);
+                    let isChunkSound = false;
+                    for (let j = i; j < chunkEnd; j++) {
+                        const rms = Math.abs(channelData[j]);
+                        const db = 20 * Math.log10(rms || 1e-9);
+                        if (db > threshold) {
+                            isChunkSound = true;
+                            break;
+                        }
+                    }
+                    if (isChunkSound && !isCurrentlySound) {
+                        soundStartSample = i;
+                        isCurrentlySound = true;
+                    } else if (!isChunkSound && isCurrentlySound) {
+                        soundChunks.push({ start: soundStartSample / sampleRate, end: i / sampleRate });
+                        isCurrentlySound = false;
+                    }
+                }
+                if (isCurrentlySound) {
+                    soundChunks.push({ start: soundStartSample / sampleRate, end: channelData.length / sampleRate });
+                }
+                return soundChunks;
+            }
+
+            function mergeAdjacentChunks(chunks, maxGapInSeconds) {
+                statusDisplay.innerHTML = '<div class="loader"></div><p class="ml-4">Suavizando cortes...</p>';
+                if (chunks.length < 2) return chunks;
+                const mergedChunks = [chunks[0]];
+                for (let i = 1; i < chunks.length; i++) {
+                    const lastMergedChunk = mergedChunks[mergedChunks.length - 1];
+                    const currentChunk = chunks[i];
+                    const gap = currentChunk.start - lastMergedChunk.end;
+                    if (gap < maxGapInSeconds) {
+                        lastMergedChunk.end = currentChunk.end;
+                    } else {
+                        mergedChunks.push(currentChunk);
+                    }
+                }
+                return mergedChunks;
+            }
+
+            function createProcessedBuffer(originalBuffer, chunks) {
+                statusDisplay.innerHTML = '<div class="loader"></div><p class="ml-4">Montando novo áudio...</p>';
+                const padding = parseFloat(paddingInput.value) / 1000;
+                const sampleRate = originalBuffer.sampleRate;
+                const numberOfChannels = originalBuffer.numberOfChannels;
+                let totalLength = 0;
+                chunks.forEach(chunk => {
+                    totalLength += (chunk.end - chunk.start) + padding;
+                });
+                const totalSamples = Math.floor(totalLength * sampleRate);
+                if (totalSamples === 0) return null;
+                const newBuffer = audioContext.createBuffer(numberOfChannels, totalSamples, sampleRate);
+                let offset = 0;
+                for (const chunk of chunks) {
+                    const startSample = Math.floor(chunk.start * sampleRate);
+                    const endSample = Math.floor(chunk.end * sampleRate);
+                    const chunkDurationSamples = endSample - startSample;
+                    const paddingSamples = Math.floor(padding * sampleRate);
+                    for (let channel = 0; channel < numberOfChannels; channel++) {
+                        const originalChannelData = originalBuffer.getChannelData(channel);
+                        const newChannelData = newBuffer.getChannelData(channel);
+                        const chunkData = originalChannelData.subarray(startSample, endSample);
+                        newChannelData.set(chunkData, offset);
+                    }
+                    offset += chunkDurationSamples;
+                    for (let i = 0; i < paddingSamples; i++) {
+                        for (let channel = 0; channel < numberOfChannels; channel++) {
+                            newBuffer.getChannelData(channel)[offset + i] = 0;
+                        }
+                    }
+                    offset += paddingSamples;
+                }
+                return newBuffer;
+            }
+
+            function encodeToMp3(buffer) {
+                return new Promise((resolve, reject) => {
+                    if (!buffer) return reject(new Error("Buffer de áudio inválido para codificação."));
+                    try {
+                        statusDisplay.innerHTML = '<div class="loader"></div><p class="ml-4">Codificando para MP3...</p>';
+                        const mp3encoder = new lamejs.Mp3Encoder(buffer.numberOfChannels, buffer.sampleRate, 128);
+                        const mp3Data = [];
+                        const maxSamples = 1152;
+                        if (buffer.numberOfChannels === 1) {
+                            const samples = buffer.getChannelData(0);
+                            const int16Samples = new Int16Array(samples.length);
+                            for (let i = 0; i < samples.length; i++) {
+                                int16Samples[i] = samples[i] * 32767;
+                            }
+                            for (let i = 0; i < int16Samples.length; i += maxSamples) {
+                                const sampleChunk = int16Samples.subarray(i, i + maxSamples);
+                                const mp3buf = mp3encoder.encodeBuffer(sampleChunk);
+                                if (mp3buf.length > 0) mp3Data.push(new Int8Array(mp3buf));
+                            }
+                        } else {
+                            const left = buffer.getChannelData(0);
+                            const right = buffer.getChannelData(1);
+                            const int16Left = new Int16Array(left.length);
+                            const int16Right = new Int16Array(right.length);
+                            for (let i = 0; i < left.length; i++) {
+                                int16Left[i] = left[i] * 32767;
+                                int16Right[i] = right[i] * 32767;
+                            }
+                            for (let i = 0; i < int16Left.length; i += maxSamples) {
+                                const leftChunk = int16Left.subarray(i, i + maxSamples);
+                                const rightChunk = int16Right.subarray(i, i + maxSamples);
+                                const mp3buf = mp3encoder.encodeBuffer(leftChunk, rightChunk);
+                                if (mp3buf.length > 0) mp3Data.push(new Int8Array(mp3buf));
+                            }
+                        }
+                        const flushedBuf = mp3encoder.flush();
+                        if (flushedBuf.length > 0) mp3Data.push(new Int8Array(flushedBuf));
+                        const mp3Blob = new Blob(mp3Data, { type: 'audio/mp3' });
+                        resolve(mp3Blob);
+                    } catch (error) {
+                        console.error("Erro na codificação MP3:", error);
+                        reject(error);
+                    }
+                });
+            }
+        }
+		
+        // Evento que inicializa tudo
+		document.addEventListener('DOMContentLoaded', () => {
+			// Inicializa a lógica da página do Removedor de Silêncio
+			initSilenceRemover();
+
+			// --- Início: Lógica do Pop-up de Doação ---
+			const donationModal = document.getElementById('donation-modal');
+			const closeDonationModalBtn = document.getElementById('close-donation-modal-btn');
+			const copyPixBtn = document.getElementById('copy-pix-btn');
+			const pixKey = document.getElementById('pix-key');
+			const floatingDonateBtn = document.getElementById('floating-donate-btn');
+
+			const openDonationModal = () => {
+				if (donationModal) donationModal.classList.add('visible');
+			};
+
+			const closeDonationModal = () => {
+				if (donationModal) donationModal.classList.remove('visible');
+			};
+
+			if (floatingDonateBtn) floatingDonateBtn.addEventListener('click', openDonationModal);
+			if (closeDonationModalBtn) closeDonationModalBtn.addEventListener('click', closeDonationModal);
+			if (donationModal) {
+				donationModal.addEventListener('click', (e) => {
+					if (e.target === donationModal) closeDonationModal();
+				});
+			}
+
+			if (copyPixBtn && pixKey) {
+				copyPixBtn.addEventListener('click', () => {
+					navigator.clipboard.writeText(pixKey.textContent).then(() => {
+						const originalText = copyPixBtn.textContent;
+						copyPixBtn.textContent = 'Copiado!';
+						copyPixBtn.style.backgroundColor = '#10B981';
+						setTimeout(() => {
+							copyPixBtn.textContent = originalText;
+							copyPixBtn.style.backgroundColor = '#667eea';
+						}, 2000);
+					}).catch(err => {
+						alert('Falha ao copiar a chave Pix.');
+					});
+				});
+			}
+			// --- Fim: Lógica do Pop-up de Doação ---
+		});
+    </script>
+</body>
+</html>
+

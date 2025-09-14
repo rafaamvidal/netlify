@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Projetor de Performance de Vídeo - Creators Tools</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #111827;
+        }
+        .glassmorphism {
+            background: rgba(31, 41, 55, 0.5);
+            backdrop-filter: blur(10px);
+            border: 1px solid #4B5563;
+        }
+        .form-input {
+            background-color: #374151;
+            border: 1px solid #4B5563;
+            color: #F3F4F6;
+            border-radius: 0.5rem;
+        }
+        .form-input:focus {
+            outline: none;
+            border-color: #8B5CF6;
+            box-shadow: 0 0 0 2px rgba(139, 92, 246, 0.4);
+        }
+        .btn-primary {
+            background-color: #8B5CF6;
+            color: white;
+        }
+        .btn-primary:hover {
+            background-color: #7C3AED;
+        }
+        .btn-primary:disabled {
+            background-color: #4B5563;
+            cursor: not-allowed;
+            opacity: 0.7;
+        }
+        .loader {
+            border-bottom-color: transparent !important;
+        }
+        #analysis-result h2 {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: #A5B4FC;
+            margin-top: 1.5rem;
+            margin-bottom: 0.75rem;
+            border-bottom: 1px solid #4B5563;
+            padding-bottom: 0.5rem;
+        }
+        #analysis-result h3 {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-top: 1.25rem;
+            margin-bottom: 0.5rem;
+        }
+         #analysis-result ul {
+            list-style-position: inside;
+            list-style-type: disc;
+            padding-left: 1rem;
+        }
+        #analysis-result li {
+            margin-bottom: 0.5rem;
+        }
+    </style>
+</head>
+<body class="text-gray-200">
+
+    <div class="min-h-screen w-full p-4 sm:p-6 lg:p-8">
+        <div class="max-w-6xl mx-auto">
+            
+            <header class="relative text-center mb-8 p-8 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600">
+                <a href="index.html" class="absolute top-4 left-4 rounded-md bg-white/20 hover:bg-white/30 text-sm py-2 px-3 transition">&larr; Voltar ao Painel</a>
+                <h1 class="text-4xl sm:text-5xl font-bold text-white">📈 Projetor de Performance<br> de Vídeo</h1>
+                <p class="mt-2 text-lg text-indigo-200">Visualize tendências e receba análises estratégicas da IA.</p>
+            </header>
+
+            <main class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                
+                <!-- Coluna de Entrada -->
+                <div class="lg:col-span-1 flex flex-col gap-6">
+                    <div class="glassmorphism p-6 rounded-xl">
+                        <h2 class="text-xl font-bold mb-4">1. Obtenha os Dados</h2>
+                        <ol class="text-sm text-gray-400 list-decimal list-inside space-y-2 mb-4">
+                            <li>Vá ao <strong>YouTube Studio</strong> > Estatísticas > Avançado.</li>
+                            <li>Selecione as métricas: <strong>Visualizações, Impressões, Duração média da visualização, Gostos, Comentários, Inscritos</strong>.</li>
+                            <li>No canto superior direito, clique em <strong>Exportar</strong>.</li>
+                            <li>Abra o ficheiro (CSV ou Planilha Google).</li>
+                        </ol>
+                        <h2 class="text-xl font-bold mb-4">2. Cole os Dados Aqui</h2>
+                         <p class="text-sm text-gray-400 mb-4">Copie todo o conteúdo do ficheiro exportado (incluindo o cabeçalho) e cole abaixo.</p>
+                        <textarea id="dataInput" class="form-input w-full h-48 p-3 text-xs font-mono" placeholder="Data,Visualizações,Impressões,Duração média da visualização,Gostos,Comentários,Inscritos&#10;2025-09-01,1500,20000,0:01:45,150,20,10&#10;..."></textarea>
+                    </div>
+                    <div class="glassmorphism p-6 rounded-xl">
+                         <h2 class="text-xl font-bold mb-4">3. Configure a API</h2>
+                         <div>
+                            <label for="geminiApiKey" class="block text-sm font-medium text-gray-300 mb-2">Sua Chave de API (Gemini)</label>
+                            <input type="password" id="geminiApiKey" class="form-input w-full p-3" placeholder="Cole sua chave do Google AI Studio">
+                        </div>
+                    </div>
+                     <div class="mt-2">
+                        <button id="analyzeBtn" class="btn-primary w-full py-3 px-6 rounded-lg font-semibold flex items-center justify-center text-lg">
+                            <span id="btnText">Analisar e Projetar</span>
+                            <div id="loader" class="loader w-5 h-5 ml-3 border-2 rounded-full animate-spin hidden"></div>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Coluna de Resultados -->
+                <div class="lg:col-span-2 flex flex-col gap-6">
+                     <div id="result-container" class="glassmorphism p-6 rounded-xl">
+                        <div id="chart-container" class="mb-8">
+                             <canvas id="performanceChart"></canvas>
+                        </div>
+                        <div id="analysis-result" class="prose prose-invert max-w-none text-gray-300">
+                           <p class="text-center text-gray-400">A análise estratégica da IA aparecerá aqui após o processamento.</p>
+                        </div>
+                    </div>
+                    <div id="error-container" class="bg-red-900/50 border border-red-500 text-red-300 p-4 rounded-lg hidden">
+                        <p id="errorMessage"></p>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const dataInput = document.getElementById('dataInput');
+        const geminiApiKeyInput = document.getElementById('geminiApiKey');
+        const analyzeBtn = document.getElementById('analyzeBtn');
+        const btnText = document.getElementById('btnText');
+        const loader = document.getElementById('loader');
+        const analysisResultDiv = document.getElementById('analysis-result');
+        const errorContainer = document.getElementById('error-container');
+        const errorMessageP = document.getElementById('errorMessage');
+        const chartContainer = document.getElementById('chart-container');
+        const ctx = document.getElementById('performanceChart').getContext('2d');
+        let performanceChart;
+
+        geminiApiKeyInput.addEventListener('input', () => localStorage.setItem('geminiApiKey_projection', geminiApiKeyInput.value));
+        geminiApiKeyInput.value = localStorage.getItem('geminiApiKey_projection') || '';
+        
+        function timeToSeconds(time) {
+            if (!time || typeof time !== 'string') return 0;
+            const parts = time.split(':').map(Number);
+            let seconds = 0;
+            if (parts.length === 3) { // HH:MM:SS
+                seconds = parts[0] * 3600 + parts[1] * 60 + parts[2];
+            } else if (parts.length === 2) { // MM:SS
+                seconds = parts[0] * 60 + parts[1];
+            } else {
+                seconds = parts[0]; // Just seconds
+            }
+            return isNaN(seconds) ? 0 : seconds;
+        }
+
+        function parseData(input) {
+            const lines = input.trim().split('\n');
+            if (lines.length < 2) return [];
+
+            const header = lines[0].toLowerCase().split(/[,\t]/);
+            const dateIndex = header.findIndex(h => h.includes('data') || h.includes('date'));
+            const viewsIndex = header.findIndex(h => h.includes('visualizações') || h.includes('views'));
+            const impressionsIndex = header.findIndex(h => h.includes('impressões') || h.includes('impressions'));
+            const durationIndex = header.findIndex(h => h.includes('duração') || h.includes('duration'));
+            const likesIndex = header.findIndex(h => h.includes('gostos') || h.includes('curtidas') || h.includes('likes'));
+            const commentsIndex = header.findIndex(h => h.includes('comentários') || h.includes('comments'));
+            const subsIndex = header.findIndex(h => h.includes('inscritos') || h.includes('subscribers'));
+
+            if (dateIndex === -1 || viewsIndex === -1 || impressionsIndex === -1) {
+                throw new Error("Não foi possível encontrar as colunas 'Data', 'Visualizações' e 'Impressões'. Verifique o cabeçalho.");
+            }
+
+            return lines.slice(1).map(line => {
+                const values = line.split(/[,\t]/);
+                const rowData = {
+                    date: values[dateIndex],
+                    views: parseInt(values[viewsIndex], 10),
+                    impressions: parseInt(values[impressionsIndex], 10)
+                };
+                if (durationIndex > -1) rowData.duration = timeToSeconds(values[durationIndex]);
+                if (likesIndex > -1) rowData.likes = parseInt(values[likesIndex], 10);
+                if (commentsIndex > -1) rowData.comments = parseInt(values[commentsIndex], 10);
+                if (subsIndex > -1) rowData.subs = parseInt(values[subsIndex], 10);
+                return rowData;
+            }).filter(d => d.date && !isNaN(d.views) && !isNaN(d.impressions));
+        }
+        
+        function createChart(data) {
+            if (performanceChart) {
+                performanceChart.destroy();
+            }
+
+            const labels = data.map(d => new Date(d.date).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' }));
+            const viewsData = data.map(d => d.views);
+            
+            // Projeção
+            const lastThreeDays = data.slice(-3);
+            let totalGrowth = 0;
+            for (let i = 1; i < lastThreeDays.length; i++) {
+                totalGrowth += lastThreeDays[i].views - lastThreeDays[i - 1].views;
+            }
+            const avgDailyGrowth = lastThreeDays.length > 1 ? totalGrowth / (lastThreeDays.length - 1) : 0;
+            const projectionData = [];
+            let lastViewCount = viewsData[viewsData.length - 1] || 0;
+            for (let i = 1; i <= 7; i++) {
+                lastViewCount += avgDailyGrowth;
+                projectionData.push(Math.round(lastViewCount));
+                const nextDate = new Date(data[data.length - 1].date);
+                nextDate.setDate(nextDate.getDate() + i + 1);
+                labels.push(nextDate.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' }));
+            }
+            const projectionLine = Array(data.length - 1).fill(null).concat(viewsData[viewsData.length-1], projectionData);
+
+            const datasets = [{
+                label: 'Visualizações Reais',
+                data: viewsData,
+                borderColor: '#8B5CF6',
+                backgroundColor: 'rgba(139, 92, 246, 0.2)',
+                fill: true,
+                tension: 0.1,
+                yAxisID: 'y'
+            }, {
+                label: 'Projeção (7 dias)',
+                data: projectionLine,
+                borderColor: '#10B981',
+                borderDash: [5, 5],
+                fill: false,
+                tension: 0.1,
+                yAxisID: 'y'
+            }];
+
+            if (data[0].duration !== undefined) {
+                datasets.push({
+                    label: 'Duração Média (s)',
+                    data: data.map(d => d.duration),
+                    borderColor: '#EC4899',
+                    fill: false,
+                    tension: 0.1,
+                    yAxisID: 'y1'
+                });
+            }
+            if (data[0].likes !== undefined) {
+                datasets.push({
+                    label: 'Gostos',
+                    data: data.map(d => d.likes),
+                    borderColor: '#F59E0B',
+                    fill: false,
+                    tension: 0.1,
+                    yAxisID: 'y1'
+                });
+            }
+             if (data[0].comments !== undefined) {
+                datasets.push({
+                    label: 'Comentários',
+                    data: data.map(d => d.comments),
+                    borderColor: '#3B82F6',
+                    fill: false,
+                    tension: 0.1,
+                    yAxisID: 'y1'
+                });
+            }
+            if (data[0].subs !== undefined) {
+                 datasets.push({
+                    label: 'Inscritos',
+                    data: data.map(d => d.subs),
+                    borderColor: '#EF4444',
+                    fill: false,
+                    tension: 0.1,
+                    yAxisID: 'y1'
+                });
+            }
+
+
+            performanceChart = new Chart(ctx, {
+                type: 'line',
+                data: { labels, datasets },
+                options: {
+                    responsive: true,
+                    plugins: { legend: { labels: { color: '#E5E7EB' } } },
+                    scales: {
+                        x: { ticks: { color: '#9CA3AF' }, grid: { color: 'rgba(75, 85, 99, 0.5)' } },
+                        y: { type: 'linear', display: true, position: 'left', ticks: { color: '#9CA3AF' }, grid: { color: 'rgba(75, 85, 99, 0.5)' } },
+                        y1: { type: 'linear', display: true, position: 'right', ticks: { color: '#9CA3AF' }, grid: { drawOnChartArea: false } }
+                    }
+                }
+            });
+        }
+
+
+        analyzeBtn.addEventListener('click', async () => {
+            const rawData = dataInput.value;
+            const geminiApiKey = geminiApiKeyInput.value.trim();
+            
+            if (!rawData) {
+                showError('Por favor, cole os dados do seu vídeo.');
+                return;
+            }
+            if (!geminiApiKey) {
+                showError('Por favor, insira a sua chave de API do Gemini.');
+                return;
+            }
+            
+            try {
+                const parsedData = parseData(rawData);
+                if (parsedData.length < 3) {
+                    showError('São necessários pelo menos 3 dias de dados para uma análise significativa.');
+                    return;
+                }
+                
+                setLoading(true);
+                hideError();
+                createChart(parsedData);
+                
+                const response = await fetch('/.netlify/functions/project-performance', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ geminiApiKey, performanceData: rawData })
+                });
+
+                const data = await response.json();
+                if (!response.ok) throw new Error(data.error);
+
+                let htmlResult = data.analysis
+                    .replace(/## (.*)/g, '<h2>$1</h2>')
+                    .replace(/### (.*)/g, '<h3>$1</h3>')
+                    .replace(/\* \*\*(.*?)\*\*:/g, (match, p1) => `<li><strong>${p1}:</strong>`)
+                    .replace(/\* (.*)/g, '<li>$1</li>')
+                    .replace(/\n/g, '<br>')
+                    .replace(/<br><li>/g, '<li>')
+                    .replace(/<\/strong><br>/g, '</strong> ');
+                
+                htmlResult = htmlResult.replace(/<li>(.*?)<\/li>/gs, (match) => `<ul>${match}</ul>`).replace(/<\/ul><ul>/g, '');
+
+                analysisResultDiv.innerHTML = htmlResult;
+
+            } catch(error) {
+                console.error("Erro na análise:", error);
+                showError(error.message);
+            } finally {
+                setLoading(false);
+            }
+        });
+
+        function setLoading(isLoading) {
+            analyzeBtn.disabled = isLoading;
+            btnText.textContent = isLoading ? 'A processar...' : 'Analisar e Projetar';
+            loader.classList.toggle('hidden', !isLoading);
+        }
+
+        function showError(message) {
+            errorMessageP.textContent = message;
+            errorContainer.classList.remove('hidden');
+        }
+        function hideError() {
+            errorContainer.classList.add('hidden');
+        }
+    });
+    </script>
+</body>
+</html>
+
