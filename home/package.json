@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "description": "Backend functions for Creators Tools",
   "dependencies": {
-    "@google/generative-ai": "^0.14.1"
+    "@google/generative-ai": "^0.14.1",
+    "node-fetch": "^2.7.0"
   }
 }
