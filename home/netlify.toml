@@ -2,3 +2,7 @@
 directory = "netlify/functions/"
 
 [functions.timeout]
+
+[build]
+publish = "." # O ponto significa "diretório raiz"
+command = ""  # Deixe em branco, pois não temos um passo de "build"
