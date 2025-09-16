@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gerador de Títulos Virais (IA) - Creators Tools</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #111827;
+        }
+        .glassmorphism {
+            background: rgba(31, 41, 55, 0.5);
+            backdrop-filter: blur(10px);
+            border: 1px solid #4B5563;
+        }
+        .form-input, .form-select {
+            background-color: #374151;
+            border: 1px solid #4B5563;
+            color: #F3F4F6;
+            border-radius: 0.5rem;
+        }
+        .form-input:focus, .form-select:focus {
+            outline: none;
+            border-color: #8B5CF6;
+            box-shadow: 0 0 0 2px rgba(139, 92, 246, 0.4);
+        }
+        .btn-primary {
+            background-color: #8B5CF6;
+            color: white;
+        }
+        .btn-primary:hover {
+            background-color: #7C3AED;
+        }
+        .btn-primary:disabled {
+            background-color: #4B5563;
+            cursor: not-allowed;
+            opacity: 0.7;
+        }
+        .loader {
+            border-bottom-color: transparent !important;
+        }
+        .title-suggestion {
+            transition: background-color 0.2s;
+        }
+        .title-suggestion:hover {
+            background-color: rgba(139, 92, 246, 0.1);
+        }
+    </style>
+</head>
+<body class="text-gray-200">
+
+    <div class="min-h-screen w-full p-4 sm:p-6 lg:p-8">
+        <div class="max-w-6xl mx-auto">
+            
+            <header class="relative text-center mb-8 p-8 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600">
+                <a href="index.html" class="absolute top-4 left-4 rounded-md bg-white/20 hover:bg-white/30 text-sm py-2 px-3 transition">&larr; Voltar ao Painel</a>
+                <h1 class="text-4xl sm:text-5xl font-bold text-white">🔥 Gerador de Títulos Virais</h1>
+                <p class="mt-2 text-lg text-indigo-200">Crie títulos altamente atrativos para os seus vídeos do YouTube.</p>
+            </header>
+
+            <main class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                
+                <!-- Coluna de Entrada -->
+                <div class="lg:col-span-1 flex flex-col gap-6">
+                    <div class="glassmorphism p-6 rounded-xl">
+                        <h2 class="text-xl font-bold mb-4">1. Detalhes do Vídeo</h2>
+                        <div class="space-y-4">
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label for="niche" class="block text-sm font-medium text-gray-300 mb-2">Nicho*</label>
+                                    <select id="niche" class="form-select w-full p-2 text-sm"></select>
+                                </div>
+                                <div>
+                                    <label for="subniche" class="block text-sm font-medium text-gray-300 mb-2">Subnicho*</label>
+                                    <select id="subniche" class="form-select w-full p-2 text-sm"></select>
+                                </div>
+                            </div>
+                             <div id="custom-niche-container" class="space-y-4" style="display: none;">
+                                <input type="text" id="niche-custom" class="form-input w-full p-2 text-sm" placeholder="Digite o seu nicho personalizado">
+                                <input type="text" id="subniche-custom" class="form-input w-full p-2 text-sm" placeholder="Digite o seu subnicho personalizado">
+                            </div>
+                            <div>
+                                <label for="theme" class="block text-sm font-medium text-gray-300 mb-2">Tema do Vídeo/Canal*</label>
+                                <input type="text" id="theme" class="form-input w-full p-2 text-sm" placeholder="Ex: Superação, traição familiar">
+                            </div>
+                             <div>
+                                <label for="script" class="block text-sm font-medium text-gray-300 mb-2">Roteiro ou Hook (Opcional)</label>
+                                <textarea id="script" class="form-input w-full h-24 p-2 text-sm" placeholder="Cole aqui o roteiro ou o gancho inicial do vídeo..."></textarea>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="glassmorphism p-6 rounded-xl">
+                         <h2 class="text-xl font-bold mb-4">2. Direção Criativa (Opcional)</h2>
+                         <div class="space-y-4">
+                            <div>
+                                <label for="structure" class="block text-sm font-medium text-gray-300 mb-2">Estrutura Desejada</label>
+                                <input type="text" id="structure" class="form-input w-full p-2 text-sm" placeholder="Ex: [Personagem] + [Situação] + [Reviravolta]">
+                            </div>
+                             <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label for="emotion" class="block text-sm font-medium text-gray-300 mb-2">Emoção</label>
+                                    <input type="text" id="emotion" class="form-input w-full p-2 text-sm" placeholder="Ex: Curiosidade, revolta">
+                                </div>
+                                <div>
+                                    <label for="angle" class="block text-sm font-medium text-gray-300 mb-2">Ângulo</label>
+                                    <input type="text" id="angle" class="form-input w-full p-2 text-sm" placeholder="Ex: Focado no protagonista">
+                                </div>
+                            </div>
+                         </div>
+                    </div>
+                     <div class="glassmorphism p-6 rounded-xl">
+                         <h2 class="text-xl font-bold mb-4">3. Configurações Finais</h2>
+                         <div class="space-y-4">
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label for="language" class="block text-sm font-medium text-gray-300 mb-2">Idioma de Saída</label>
+                                    <select id="language" class="form-select w-full p-2 text-sm">
+                                        <option value="Português (Brasil)" selected>Português (Brasil)</option>
+                                        <option value="English">English</option>
+                                        <option value="Español">Español</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label for="api-provider" class="block text-sm font-medium text-gray-300 mb-2">Modelo de IA</label>
+                                    <select id="api-provider" class="form-select w-full p-2 text-sm">
+                                        <option value="gemini" selected>Gemini</option>
+                                        <option value="openai">OpenAI (GPT-4o mini)</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div id="gemini-key-container">
+                                <label for="geminiApiKey" class="block text-sm font-medium text-gray-300 mb-2">Chave de API (Gemini)</label>
+                                <input type="password" id="geminiApiKey" class="form-input w-full p-2 text-sm" placeholder="Cole sua chave do Google AI Studio">
+                            </div>
+                            <div id="openai-key-container" style="display: none;">
+                                <label for="openaiApiKey" class="block text-sm font-medium text-gray-300 mb-2">Chave de API (OpenAI)</label>
+                                <input type="password" id="openaiApiKey" class="form-input w-full p-2 text-sm" placeholder="Cole sua chave da OpenAI">
+                            </div>
+                         </div>
+                    </div>
+                     <div class="mt-2">
+                        <button id="generateBtn" class="btn-primary w-full py-3 px-6 rounded-lg font-semibold flex items-center justify-center text-lg">
+                            <span id="btnText">Gerar Títulos</span>
+                            <div id="loader" class="loader w-5 h-5 ml-3 border-2 rounded-full animate-spin hidden"></div>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Coluna de Resultados -->
+                <div class="lg:col-span-1 flex flex-col gap-6">
+                     <div class="glassmorphism p-6 rounded-xl">
+                        <h2 class="text-xl font-bold mb-4">Sugestões de Títulos</h2>
+                        <div id="suggestions-container" class="space-y-3">
+                           <p class="text-center text-gray-400 py-10">As suas sugestões de títulos aparecerão aqui.</p>
+                        </div>
+                    </div>
+                    <div id="refine-section" class="glassmorphism p-6 rounded-xl" style="display: none;">
+                        <h2 class="text-xl font-bold mb-4">Refinar Título Selecionado</h2>
+                        <div class="space-y-4">
+                            <div>
+                               <label class="block text-sm font-medium text-gray-300 mb-2">Título a ser melhorado</label>
+                               <p id="title-to-refine" class="form-input bg-gray-800 p-3 text-sm"></p>
+                            </div>
+                            <div>
+                               <label for="refine-instructions" class="block text-sm font-medium text-gray-300 mb-2">Instruções para a IA</label>
+                               <input type="text" id="refine-instructions" class="form-input w-full p-2 text-sm" placeholder="Ex: Deixe mais misterioso, foque na emoção da mãe...">
+                            </div>
+                            <button id="refineBtn" class="w-full py-2 px-4 rounded-lg font-semibold flex items-center justify-center text-md bg-indigo-600 hover:bg-indigo-700 text-white">
+                                <span id="refineBtnText">Refinar Título</span>
+                                <div id="refineLoader" class="loader w-4 h-4 ml-2 border-2 rounded-full animate-spin hidden"></div>
+                            </button>
+                        </div>
+                    </div>
+                     <div id="error-container" class="bg-red-900/50 border border-red-500 text-red-300 p-4 rounded-lg hidden">
+                        <p id="errorMessage"></p>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const nicheSelect = document.getElementById('niche');
+        const subnicheSelect = document.getElementById('subniche');
+        const customNicheContainer = document.getElementById('custom-niche-container');
+        const nicheCustomInput = document.getElementById('niche-custom');
+        const subnicheCustomInput = document.getElementById('subniche-custom');
+        
+        const geminiApiKeyInput = document.getElementById('geminiApiKey');
+        const openaiApiKeyInput = document.getElementById('openaiApiKey');
+        const apiProviderSelect = document.getElementById('api-provider');
+        const geminiKeyContainer = document.getElementById('gemini-key-container');
+        const openaiKeyContainer = document.getElementById('openai-key-container');
+        const generateBtn = document.getElementById('generateBtn');
+        const suggestionsContainer = document.getElementById('suggestions-container');
+        const refineSection = document.getElementById('refine-section');
+        const titleToRefineP = document.getElementById('title-to-refine');
+        const refineInstructionsInput = document.getElementById('refine-instructions');
+        const refineBtn = document.getElementById('refineBtn');
+        const errorContainer = document.getElementById('error-container');
+        const errorMessageP = document.getElementById('errorMessage');
+
+        const nicheData = {
+            "Saúde & Bem-Estar": ["Performance", "Perda de Peso", "Anti-Aging", "Alertas", "Soluções Naturais", "Doenças Crônicas"],
+            "Finanças": ["Enriquecimento", "Investimentos", "Cripto", "Empreendedorismo", "Economia", "Aposentadoria"],
+            "Histórias": ["Drama Familiar", "Vingança", "Traição", "Justiça", "Superação", "Reconhecimento"],
+            "Lifestyle": ["Decoração", "Culinária", "Organização", "DIY", "Minimalismo", "Produtividade"],
+            "Tecnologia": ["Smartphones", "Apps", "Gadgets", "Tutoriais", "Reviews", "Hacks"],
+            "Gaming": ["Reviews", "Gameplay", "Dicas", "Builds", "Notícias", "Hardware"],
+            "Espiritualidade": ["Orações", "Pedidos Urgentes", "Milagres", "Proteção", "Cura", "Libertação"],
+            "Anjos": ["Mensagens", "Números", "Sinais", "Proteção", "Abundância", "Amor"],
+            "Outro": []
+        };
+
+        function populateNiches() {
+            Object.keys(nicheData).forEach(niche => {
+                const option = document.createElement('option');
+                option.value = niche;
+                option.textContent = niche;
+                nicheSelect.appendChild(option);
+            });
+            updateSubniches();
+        }
+
+        function updateSubniches() {
+            const selectedNiche = nicheSelect.value;
+            subnicheSelect.innerHTML = '';
+            
+            if (selectedNiche === 'Outro') {
+                subnicheSelect.style.display = 'none';
+                customNicheContainer.style.display = 'block';
+            } else {
+                subnicheSelect.style.display = 'block';
+                customNicheContainer.style.display = 'none';
+                nicheData[selectedNiche].forEach(subniche => {
+                    const option = document.createElement('option');
+                    option.value = subniche;
+                    option.textContent = subniche;
+                    subnicheSelect.appendChild(option);
+                });
+            }
+        }
+        
+        nicheSelect.addEventListener('change', updateSubniches);
+        populateNiches();
+        
+        // --- Gerenciamento de Chaves de API ---
+        geminiApiKeyInput.addEventListener('input', () => localStorage.setItem('geminiApiKey_titles', geminiApiKeyInput.value));
+        openaiApiKeyInput.addEventListener('input', () => localStorage.setItem('openaiApiKey_titles', openaiApiKeyInput.value));
+        geminiApiKeyInput.value = localStorage.getItem('geminiApiKey_titles') || '';
+        openaiApiKeyInput.value = localStorage.getItem('openaiApiKey_titles') || '';
+
+        apiProviderSelect.addEventListener('change', () => {
+            const isGemini = apiProviderSelect.value === 'gemini';
+            geminiKeyContainer.style.display = isGemini ? 'block' : 'none';
+            openaiKeyContainer.style.display = isGemini ? 'none' : 'block';
+        });
+        
+        function getApiDetails() {
+            const provider = apiProviderSelect.value;
+            const apiKey = provider === 'gemini' ? geminiApiKeyInput.value.trim() : openaiApiKeyInput.value.trim();
+            if (!apiKey) {
+                showError(`Por favor, insira a sua chave de API (${provider}).`);
+                return null;
+            }
+            return { provider, apiKey };
+        }
+
+        function getUserInputs() {
+            let niche, subniche;
+            if (nicheSelect.value === 'Outro') {
+                niche = nicheCustomInput.value.trim();
+                subniche = subnicheCustomInput.value.trim();
+            } else {
+                niche = nicheSelect.value;
+                subniche = subnicheSelect.value;
+            }
+
+            const theme = document.getElementById('theme').value.trim();
+
+            if (!niche || !subniche || !theme) {
+                showError('Os campos Nicho, Subnicho e Tema são obrigatórios.');
+                return null;
+            }
+
+            return {
+                niche, subniche, theme,
+                script: document.getElementById('script').value.trim(),
+                structure: document.getElementById('structure').value.trim(),
+                emotion: document.getElementById('emotion').value.trim(),
+                angle: document.getElementById('angle').value.trim(),
+                language: document.getElementById('language').value,
+            };
+        }
+
+        async function makeApiCall(payload, endpoint) {
+            const response = await fetch(endpoint, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            const data = await response.json();
+            if (!response.ok) throw new Error(data.error);
+            return data;
+        }
+
+        generateBtn.addEventListener('click', async () => {
+            const apiDetails = getApiDetails();
+            const userInputs = getUserInputs();
+            if (!apiDetails || !userInputs) return;
+
+            setLoading(generateBtn, true);
+            hideError();
+            suggestionsContainer.innerHTML = '<p class="text-center text-gray-400 py-10">A gerar sugestões...</p>';
+            refineSection.style.display = 'none';
+
+            try {
+                const data = await makeApiCall({ ...apiDetails, ...userInputs }, '/.netlify/functions/generate-titles');
+                renderSuggestions(data.titles);
+            } catch (error) {
+                console.error("Erro na geração:", error);
+                showError(error.message);
+                suggestionsContainer.innerHTML = '<p class="text-center text-red-400 py-10">Ocorreu um erro ao gerar os títulos.</p>';
+            } finally {
+                setLoading(generateBtn, false);
+            }
+        });
+        
+        refineBtn.addEventListener('click', async () => {
+            const apiDetails = getApiDetails();
+            const titleToRefine = titleToRefineP.textContent;
+            const instructions = refineInstructionsInput.value.trim();
+            if (!apiDetails || !instructions) {
+                showError('Por favor, forneça as instruções para o refinamento.');
+                return;
+            }
+
+            setLoading(refineBtn, true);
+            hideError();
+
+            try {
+                const data = await makeApiCall({ ...apiDetails, titleToRefine, instructions, language: document.getElementById('language').value }, '/.netlify/functions/generate-titles');
+                renderSuggestions([data.refinedTitle]); // Mostra o título refinado como uma nova sugestão
+                refineInstructionsInput.value = '';
+                refineSection.style.display = 'none';
+            } catch (error) {
+                console.error("Erro no refinamento:", error);
+                showError(error.message);
+            } finally {
+                setLoading(refineBtn, false);
+            }
+        });
+
+        function renderSuggestions(titles) {
+            suggestionsContainer.innerHTML = '';
+            if (!titles || titles.length === 0) {
+                 suggestionsContainer.innerHTML = '<p class="text-center text-gray-400 py-10">Nenhuma sugestão foi gerada.</p>';
+                 return;
+            }
+            titles.forEach(title => {
+                const div = document.createElement('div');
+                div.className = 'title-suggestion p-3 border-b border-gray-700 cursor-pointer';
+                div.textContent = title;
+                div.onclick = () => {
+                    titleToRefineP.textContent = title;
+                    refineSection.style.display = 'block';
+                    refineInstructionsInput.focus();
+                };
+                suggestionsContainer.appendChild(div);
+            });
+        }
+        
+        function setLoading(button, isLoading) {
+            const btnText = button.querySelector('span');
+            const loader = button.querySelector('.loader');
+            button.disabled = isLoading;
+            btnText.textContent = isLoading ? (button === generateBtn ? 'A Gerar...' : 'A Refinar...') : (button === generateBtn ? 'Gerar Títulos' : 'Refinar Título');
+            if(loader) loader.classList.toggle('hidden', !isLoading);
+        }
+
+        function showError(message) {
+            errorMessageP.textContent = message;
+            errorContainer.classList.remove('hidden');
+        }
+        function hideError() {
+            errorContainer.classList.add('hidden');
+        }
+    });
+    </script>
+</body>
+</html>
+
