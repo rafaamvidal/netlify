@@ -1,0 +1,539 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Organizador Pessoal - Creators Tools</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+			background-color: #111827;
+			background-image: radial-gradient(circle at 1px 1px, #374151 1px, transparent 0);
+			background-size: 20px 20px;
+        }
+        .glassmorphism {
+            background: rgba(31, 41, 55, 0.5);
+            backdrop-filter: blur(10px);
+            border: 1px solid #4B5563;
+        }
+        .form-input, .form-select, .form-textarea {
+            background-color: #374151;
+            border: 1px solid #4B5563;
+            color: #F3F4F6;
+            border-radius: 0.5rem;
+        }
+        .form-input:focus, .form-select:focus, .form-textarea:focus {
+            outline: none;
+            border-color: #8B5CF6;
+            box-shadow: 0 0 0 2px rgba(139, 92, 246, 0.4);
+        }
+        .btn-primary {
+            background-color: #8B5CF6;
+        }
+        .btn-primary:hover {
+            background-color: #7C3AED;
+        }
+        .task-item {
+            transition: background-color 0.2s;
+        }
+        .task-item:hover {
+            background-color: rgba(55, 65, 81, 0.7);
+        }
+        .task-item.completed {
+            opacity: 0.6;
+        }
+        .task-item.completed .task-title {
+            text-decoration: line-through;
+        }
+        .priority-alta { border-left-color: #EF4444 !important; }
+        .priority-media { border-left-color: #F59E0B !important; }
+        .priority-baixa { border-left-color: #3B82F6 !important; }
+
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(17, 24, 39, 0.8);
+            backdrop-filter: blur(5px);
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease, visibility 0.3s ease;
+        }
+        .modal-overlay.visible {
+            opacity: 1;
+            visibility: visible;
+        }
+    </style>
+</head>
+<body class="text-gray-200">
+    <div class="min-h-screen w-full p-4 sm:p-6 lg:p-8">
+        <div class="max-w-7xl mx-auto">
+            
+            <header class="relative text-center mb-8 p-8 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600">
+                <a href="index.html" class="absolute top-4 left-4 rounded-md bg-white/20 hover:bg-white/30 text-sm py-2 px-3 transition">&larr; Voltar ao Painel</a>
+                <h1 class="text-4xl sm:text-5xl font-bold text-white">📋 Organizador Pessoal</h1>
+                <p class="mt-2 text-lg text-indigo-200">Organize as suas tarefas, defina prioridades e controle os seus projetos.</p>
+            </header>
+
+            <!-- Painel de Métricas e Dicas -->
+            <section class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+                <!-- Métricas -->
+                <div class="lg:col-span-2 glassmorphism p-6 rounded-xl space-y-4">
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                        <div class="flex items-center gap-4 p-4 bg-gray-900/50 rounded-lg">
+                            <div class="text-3xl text-green-400"><i class="fas fa-check-circle"></i></div>
+                            <div>
+                                <h3 class="font-bold text-2xl" id="completed-count">0</h3>
+                                <p class="text-sm text-gray-400">Tarefas Concluídas</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-4 p-4 bg-gray-900/50 rounded-lg">
+                            <div class="text-3xl text-blue-400"><i class="fas fa-tasks"></i></div>
+                            <div>
+                                <h3 class="font-bold text-2xl" id="pending-count">0</h3>
+                                <p class="text-sm text-gray-400">Tarefas Pendentes</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-4 p-4 bg-gray-900/50 rounded-lg">
+                            <div class="text-3xl text-yellow-400"><i class="fas fa-exclamation-triangle"></i></div>
+                            <div>
+                                <h3 class="font-bold text-2xl" id="overdue-count">0</h3>
+                                <p class="text-sm text-gray-400">Tarefas Atrasadas</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div>
+                        <label for="progress-bar" class="text-sm text-gray-400">Progresso Geral</label>
+                        <div class="w-full bg-gray-700 rounded-full h-4 mt-1">
+                            <div id="progress-bar" class="bg-green-500 h-4 rounded-full transition-all duration-500 flex items-center justify-center text-xs font-bold text-white" style="width: 0%"></div>
+                        </div>
+                    </div>
+                </div>
+                <!-- Dicas -->
+                <div class="glassmorphism p-6 rounded-xl">
+                    <h3 class="font-bold mb-3">💡 Dicas para Organização</h3>
+                    <ul class="space-y-2 text-sm text-gray-300">
+                        <li class="flex gap-2"><span class="bg-purple-500 text-white rounded-full w-5 h-5 text-xs flex items-center justify-center">1</span><span>Priorize tarefas usando o sistema de cores.</span></li>
+                        <li class="flex gap-2"><span class="bg-purple-500 text-white rounded-full w-5 h-5 text-xs flex items-center justify-center">2</span><span>Divida grandes projetos em tarefas menores.</span></li>
+                        <li class="flex gap-2"><span class="bg-purple-500 text-white rounded-full w-5 h-5 text-xs flex items-center justify-center">3</span><span>Revise as suas tarefas no início de cada dia.</span></li>
+                    </ul>
+                </div>
+            </section>
+            
+            <!-- Seção de Adicionar Tarefa -->
+            <section class="glassmorphism p-6 rounded-xl mb-8">
+                <h2 class="text-xl font-bold mb-4">Adicionar Nova Tarefa</h2>
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
+                    <div class="md:col-span-3">
+                        <label for="task-title" class="sr-only">Título da Tarefa</label>
+                        <input type="text" id="task-title" class="form-input w-full p-3" placeholder="Título da tarefa">
+                    </div>
+                    <div class="flex items-center gap-4">
+                        <button id="toggle-details-btn" class="text-sm text-indigo-400 hover:text-indigo-300 whitespace-nowrap">Mais detalhes</button>
+                        <button id="add-task-btn" class="btn-primary w-full py-3 px-4 rounded-lg font-semibold flex items-center justify-center">
+                            <i class="fas fa-plus mr-2"></i> Adicionar
+                        </button>
+                    </div>
+                </div>
+                <div id="task-details" class="hidden mt-4 space-y-4 pt-4 border-t border-gray-700">
+                    <div>
+                        <label for="task-description" class="block text-sm font-medium text-gray-300 mb-2">Descrição</label>
+                        <textarea id="task-description" class="form-textarea w-full p-2.5 text-sm" rows="3" placeholder="Descreva a sua tarefa..."></textarea>
+                    </div>
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                        <div>
+                            <label for="task-priority" class="block text-sm font-medium text-gray-300 mb-2">Prioridade</label>
+                            <select id="task-priority" class="form-select w-full p-2.5 text-sm">
+                                <option value="baixa">Baixa</option>
+                                <option value="media" selected>Média</option>
+                                <option value="alta">Alta</option>
+                            </select>
+                        </div>
+                        <div>
+                             <label for="task-category" class="block text-sm font-medium text-gray-300 mb-2">Categoria</label>
+                            <select id="task-category" class="form-select w-full p-2.5 text-sm"></select>
+                        </div>
+                        <div>
+                            <label for="task-due-date" class="block text-sm font-medium text-gray-300 mb-2">Data de Vencimento</label>
+                            <input type="date" id="task-due-date" class="form-input w-full p-2.5 text-sm">
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Seção Minhas Tarefas -->
+            <section class="glassmorphism p-6 rounded-xl">
+                 <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-xl font-bold">Minhas Tarefas</h2>
+                    <div class="flex items-center gap-2">
+                        <i class="fas fa-filter text-gray-400"></i>
+                        <select id="filter-category" class="form-select p-2 text-sm">
+                            <option value="all">Todas as Categorias</option>
+                        </select>
+                    </div>
+                </div>
+                <div id="tasks-list" class="space-y-3">
+                    <!-- Tarefas serão renderizadas aqui -->
+                </div>
+            </section>
+        </div>
+    </div>
+    
+    <!-- Modal Nova Categoria -->
+    <div id="category-modal" class="modal-overlay">
+         <div class="glassmorphism p-6 rounded-xl w-full max-w-sm">
+             <h3 class="font-bold text-lg mb-4">Nova Categoria</h3>
+             <input type="text" id="new-category-name" class="form-input w-full p-2.5 mb-4" placeholder="Nome da nova categoria">
+             <div class="flex justify-end gap-3">
+                 <button id="cancel-category-btn" class="bg-gray-600 hover:bg-gray-700 text-white py-2 px-4 rounded-lg">Cancelar</button>
+                 <button id="save-category-btn" class="btn-primary text-white py-2 px-4 rounded-lg">Salvar</button>
+             </div>
+        </div>
+    </div>
+
+    <!-- Modal Editar Tarefa -->
+    <div id="edit-task-modal" class="modal-overlay">
+        <div class="glassmorphism p-6 rounded-xl w-full max-w-lg">
+            <h3 class="font-bold text-lg mb-4">Editar Tarefa</h3>
+            <div class="space-y-4">
+                <div>
+                    <label for="edit-task-title" class="block text-sm font-medium text-gray-300 mb-2">Título da Tarefa</label>
+                    <input type="text" id="edit-task-title" class="form-input w-full p-2.5">
+                </div>
+                <div>
+                    <label for="edit-task-description" class="block text-sm font-medium text-gray-300 mb-2">Descrição</label>
+                    <textarea id="edit-task-description" class="form-textarea w-full p-2.5 text-sm" rows="3"></textarea>
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div>
+                        <label for="edit-task-priority" class="block text-sm font-medium text-gray-300 mb-2">Prioridade</label>
+                        <select id="edit-task-priority" class="form-select w-full p-2.5 text-sm">
+                            <option value="baixa">Baixa</option>
+                            <option value="media">Média</option>
+                            <option value="alta">Alta</option>
+                        </select>
+                    </div>
+                    <div>
+                         <label for="edit-task-category" class="block text-sm font-medium text-gray-300 mb-2">Categoria</label>
+                        <select id="edit-task-category" class="form-select w-full p-2.5 text-sm"></select>
+                    </div>
+                    <div>
+                        <label for="edit-task-due-date" class="block text-sm font-medium text-gray-300 mb-2">Data de Vencimento</label>
+                        <input type="date" id="edit-task-due-date" class="form-input w-full p-2.5 text-sm">
+                    </div>
+                </div>
+            </div>
+            <div class="flex justify-end gap-3 mt-6">
+                <button id="cancel-edit-btn" class="bg-gray-600 hover:bg-gray-700 text-white py-2 px-4 rounded-lg">Cancelar</button>
+                <button id="save-edit-btn" class="btn-primary text-white py-2 px-4 rounded-lg">Salvar Alterações</button>
+            </div>
+       </div>
+   </div>
+
+    <script>
+    document.addEventListener('DOMContentLoaded', () => {
+        // Elementos da UI
+        const addTaskBtn = document.getElementById('add-task-btn');
+        const tasksList = document.getElementById('tasks-list');
+        const taskTitleInput = document.getElementById('task-title');
+        const toggleDetailsBtn = document.getElementById('toggle-details-btn');
+        const taskDetailsDiv = document.getElementById('task-details');
+        const taskDescriptionInput = document.getElementById('task-description');
+        const taskPrioritySelect = document.getElementById('task-priority');
+        const taskCategorySelect = document.getElementById('task-category');
+        const taskDueDateInput = document.getElementById('task-due-date');
+        const filterCategorySelect = document.getElementById('filter-category');
+        
+        // Modal de Categoria
+        const categoryModal = document.getElementById('category-modal');
+        const saveCategoryBtn = document.getElementById('save-category-btn');
+        const cancelCategoryBtn = document.getElementById('cancel-category-btn');
+        const newCategoryNameInput = document.getElementById('new-category-name');
+        
+        // Modal de Edição
+        const editTaskModal = document.getElementById('edit-task-modal');
+        const saveEditBtn = document.getElementById('save-edit-btn');
+        const cancelEditBtn = document.getElementById('cancel-edit-btn');
+        const editTaskTitleInput = document.getElementById('edit-task-title');
+        const editTaskDescriptionInput = document.getElementById('edit-task-description');
+        const editTaskPrioritySelect = document.getElementById('edit-task-priority');
+        const editTaskCategorySelect = document.getElementById('edit-task-category');
+        const editTaskDueDateInput = document.getElementById('edit-task-due-date');
+
+        // Métricas
+        const completedCountEl = document.getElementById('completed-count');
+        const pendingCountEl = document.getElementById('pending-count');
+        const overdueCountEl = document.getElementById('overdue-count');
+        const progressBarEl = document.getElementById('progress-bar');
+
+        // State
+        let tasks = JSON.parse(localStorage.getItem('personal_tasks')) || [];
+        let categories = JSON.parse(localStorage.getItem('personal_categories')) || ['Canal 1'];
+        let editingTaskId = null;
+
+        // --- Funções de Renderização ---
+
+        function renderAll() {
+            renderCategories();
+            renderTasks();
+            updateMetrics();
+        }
+
+        function renderTasks() {
+            const filter = filterCategorySelect.value;
+            tasksList.innerHTML = '';
+            
+            const filteredTasks = tasks.filter(task => filter === 'all' || task.category === filter);
+
+            if (filteredTasks.length === 0) {
+                tasksList.innerHTML = `<p class="text-center text-gray-500 py-4">Nenhuma tarefa encontrada.</p>`;
+                return;
+            }
+
+            filteredTasks.sort((a,b) => a.completed - b.completed || new Date(a.createdAt) - new Date(b.createdAt));
+
+            filteredTasks.forEach(task => {
+                const taskEl = document.createElement('div');
+                taskEl.className = `task-item bg-gray-800 p-4 rounded-lg flex items-center gap-4 border-l-4 ${task.completed ? 'completed' : ''} priority-${task.priority}`;
+                
+                const isOverdue = !task.completed && task.dueDate && new Date(task.dueDate) < new Date().setHours(0,0,0,0);
+                const dueDate = task.dueDate ? new Date(task.dueDate + 'T00:00:00') : null; // Evita problemas de fuso horário
+                
+                taskEl.innerHTML = `
+                    <input type="checkbox" data-id="${task.id}" class="form-checkbox h-5 w-5 bg-gray-700 border-gray-600 rounded-full text-green-500 focus:ring-0" ${task.completed ? 'checked' : ''}>
+                    <div class="flex-grow">
+                        <p class="font-semibold task-title">${task.title}</p>
+                        <div class="flex items-center gap-4 text-xs text-gray-400 mt-1">
+                            <span><i class="fas fa-tag mr-1"></i>${task.category || 'Sem categoria'}</span>
+                            ${dueDate ? `<span class="${isOverdue ? 'text-red-400 font-semibold' : ''}"><i class="fas fa-calendar-alt mr-1"></i>${dueDate.toLocaleDateString()}</span>` : ''}
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <button class="text-gray-500 hover:text-yellow-400" data-id="${task.id}" data-action="edit"><i class="fas fa-pencil-alt"></i></button>
+                        <button class="text-gray-500 hover:text-red-500" data-id="${task.id}" data-action="delete"><i class="fas fa-trash-alt"></i></button>
+                    </div>
+                `;
+                tasksList.appendChild(taskEl);
+            });
+        }
+        
+        function renderCategories() {
+            const currentTaskCategory = taskCategorySelect.value;
+            const currentEditCategory = editTaskCategorySelect.value;
+
+            // Limpa as opções
+            taskCategorySelect.innerHTML = `<option value="Sem categoria">Sem categoria</option>`;
+            filterCategorySelect.innerHTML = `<option value="all">Todas as Categorias</option>`;
+            editTaskCategorySelect.innerHTML = `<option value="Sem categoria">Sem categoria</option>`;
+            
+            categories.forEach(cat => {
+                // Adiciona para o seletor de nova tarefa
+                const optionTask = document.createElement('option');
+                optionTask.value = cat;
+                optionTask.textContent = cat;
+                taskCategorySelect.appendChild(optionTask);
+
+                // Adiciona para o seletor de filtro
+                const optionFilter = document.createElement('option');
+                optionFilter.value = cat;
+                optionFilter.textContent = cat;
+                filterCategorySelect.appendChild(optionFilter);
+                
+                // Adiciona para o seletor de edição
+                const optionEdit = document.createElement('option');
+                optionEdit.value = cat;
+                optionEdit.textContent = cat;
+                editTaskCategorySelect.appendChild(optionEdit);
+            });
+            
+            // Adiciona a opção "+ Nova Categoria"
+            const newCatOption = document.createElement('option');
+            newCatOption.value = 'new';
+            newCatOption.textContent = '+ Nova categoria';
+            taskCategorySelect.appendChild(newCatOption);
+            
+            // Restaura valores selecionados
+            taskCategorySelect.value = currentTaskCategory || "Sem categoria";
+            editTaskCategorySelect.value = currentEditCategory || "Sem categoria";
+        }
+
+        function updateMetrics() {
+            const completed = tasks.filter(t => t.completed).length;
+            const total = tasks.length;
+            const pending = total - completed;
+            const overdue = tasks.filter(t => !t.completed && t.dueDate && new Date(t.dueDate + 'T00:00:00') < new Date().setHours(0,0,0,0)).length;
+
+            completedCountEl.textContent = completed;
+            pendingCountEl.textContent = pending;
+            overdueCountEl.textContent = overdue;
+            
+            const progress = total > 0 ? (completed / total) * 100 : 0;
+            progressBarEl.style.width = `${progress}%`;
+            progressBarEl.textContent = total > 0 ? `${Math.round(progress)}%` : '';
+        }
+
+        // --- Lógica de Eventos ---
+
+        toggleDetailsBtn.addEventListener('click', () => {
+            const isHidden = taskDetailsDiv.classList.contains('hidden');
+            taskDetailsDiv.classList.toggle('hidden');
+            toggleDetailsBtn.textContent = isHidden ? 'Menos detalhes' : 'Mais detalhes';
+        });
+
+        addTaskBtn.addEventListener('click', () => {
+            const title = taskTitleInput.value.trim();
+            if (!title) return;
+
+            const newTask = {
+                id: Date.now().toString(),
+                title,
+                description: taskDescriptionInput.value.trim(),
+                priority: taskPrioritySelect.value,
+                category: taskCategorySelect.value === 'new' ? 'Sem categoria' : taskCategorySelect.value,
+                dueDate: taskDueDateInput.value,
+                completed: false,
+                createdAt: new Date().toISOString()
+            };
+
+            tasks.push(newTask);
+            saveAndRender();
+            
+            // Resetar formulário
+            taskTitleInput.value = '';
+            taskDescriptionInput.value = '';
+            taskDueDateInput.value = '';
+            taskPrioritySelect.value = 'media';
+            taskCategorySelect.value = 'Sem categoria';
+            if (!taskDetailsDiv.classList.contains('hidden')) {
+                toggleDetailsBtn.click();
+            }
+        });
+        
+        // --- Eventos de Categoria ---
+        taskCategorySelect.addEventListener('change', () => {
+            if(taskCategorySelect.value === 'new') {
+                categoryModal.classList.add('visible');
+                newCategoryNameInput.focus();
+            }
+        });
+
+        saveCategoryBtn.addEventListener('click', () => {
+            const newName = newCategoryNameInput.value.trim();
+            if (newName && !categories.includes(newName)) {
+                categories.push(newName);
+                saveCategories();
+                renderCategories();
+                taskCategorySelect.value = newName;
+            }
+            closeCategoryModal();
+        });
+
+        cancelCategoryBtn.addEventListener('click', () => {
+            taskCategorySelect.value = "Sem categoria";
+            closeCategoryModal();
+        });
+        
+        function closeCategoryModal() {
+            newCategoryNameInput.value = '';
+            categoryModal.classList.remove('visible');
+        }
+
+        // --- Eventos de Tarefas (Check, Edit, Delete) ---
+        tasksList.addEventListener('click', e => {
+            const target = e.target;
+            
+            if (target.type === 'checkbox') {
+                const taskId = target.dataset.id;
+                const task = tasks.find(t => t.id === taskId);
+                if (task) {
+                    task.completed = target.checked;
+                    saveAndRender();
+                }
+            }
+            
+            const actionButton = target.closest('button');
+            if(actionButton) {
+                const action = actionButton.dataset.action;
+                const taskId = actionButton.dataset.id;
+                if(action === 'delete') {
+                    if (confirm('Tem certeza que deseja apagar esta tarefa?')) {
+                        tasks = tasks.filter(t => t.id !== taskId);
+                        saveAndRender();
+                    }
+                }
+                if(action === 'edit') {
+                    openEditModal(taskId);
+                }
+            }
+        });
+
+        filterCategorySelect.addEventListener('change', renderTasks);
+
+        // --- Lógica do Modal de Edição ---
+        function openEditModal(taskId) {
+            const task = tasks.find(t => t.id === taskId);
+            if (!task) return;
+
+            editingTaskId = taskId;
+            editTaskTitleInput.value = task.title;
+            editTaskDescriptionInput.value = task.description;
+            editTaskPrioritySelect.value = task.priority;
+            editTaskCategorySelect.value = task.category;
+            editTaskDueDateInput.value = task.dueDate;
+            
+            editTaskModal.classList.add('visible');
+        }
+
+        function closeEditModal() {
+            editingTaskId = null;
+            editTaskModal.classList.remove('visible');
+        }
+
+        saveEditBtn.addEventListener('click', () => {
+            if (!editingTaskId) return;
+            const task = tasks.find(t => t.id === editingTaskId);
+            if(task) {
+                task.title = editTaskTitleInput.value.trim();
+                task.description = editTaskDescriptionInput.value.trim();
+                task.priority = editTaskPrioritySelect.value;
+                task.category = editTaskCategorySelect.value;
+                task.dueDate = editTaskDueDateInput.value;
+            }
+            saveAndRender();
+            closeEditModal();
+        });
+
+        cancelEditBtn.addEventListener('click', closeEditModal);
+
+        // --- Funções de Persistência ---
+        function saveTasks() {
+            localStorage.setItem('personal_tasks', JSON.stringify(tasks));
+        }
+
+        function saveCategories() {
+            localStorage.setItem('personal_categories', JSON.stringify(categories));
+        }
+        
+        function saveAndRender() {
+            saveTasks();
+            renderAll();
+        }
+
+        // Inicialização
+        renderAll();
+    });
+    </script>
+</body>
+</html>
+
